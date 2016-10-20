@@ -23,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/keithws/contentful-sync-cli/issues"
   },
-  "homepage": "https://github.com/keithws/contentful-sync-cli#readme"
+  "homepage": "https://github.com/keithws/contentful-sync-cli#readme",
+  "dependencies": {
+    "contentful": "^3.7.0"
+  }
 }
