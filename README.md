@@ -10,24 +10,36 @@ npm install -g contentful-sync-cli
 
 ## Command Usage
 
+```bash
 
+	CONTENTFUL_ACCESS_TOKEN=b4c0n73n7fu1
+	mkdir /tmp/contentful-data-cfexampleapi
+	cd /tmp/contentful-data-cfexampleapi
+	contentful-sync pull --space cfexampleapi
+
+```
+The current working directory will be populated with the assets and entries from the specified space grouped by content type. Each asset and entry will occupy one file. Each entry will be saved in JSON.
+
+The environment variable containing the Contentful Acces Token can and should be added to your shell profile.
+
+Run `contentful-sync --help` for more details.
 
 ## Library Usage
 
 ```js
 
-	const sync = require('contentful-sync-cli');
+	const contentfulSync = require('contentful-sync-cli');
 	
 	let options = {
-		"space": "cfexampleapi",
 		"accessToken": "b4c0n73n7fu1",
+		"space": "cfexampleapi",
 		"destination": "/tmp/contentful-data-cfexampleapi"
 	};
 	
-	sync(options)
+	contentfulSync.pull(options)
 	.then(() => {
 	
-		console.log("Saved data to %s", destination);
+		console.log("Saved data to %s", options.destination);
 	
 	})
 	.catch((err) => {
@@ -56,13 +68,14 @@ npm install -g contentful-sync-cli
 
 * turn index.js into a module
 * create bin script and require index.js module
+* create `pull` sub-command
 * parse command line options and merge with environment variables
 * save entries and assets to disk
 * delete deletedEntries and deletedAssets from disk
 
 ## Change Log
 
-_October 19, 2016 – v1.0.0_
+_October 20, 2016 – v1.0.0_
 
 * call sync api
 * save sync token
