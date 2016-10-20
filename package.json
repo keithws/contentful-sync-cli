@@ -1,0 +1,27 @@
+{
+  "name": "contentful-sync-cli",
+  "version": "1.0.0",
+  "description": "Command line program to sync data from Contentful to local files on disk.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keithws/contentful-sync-cli.git"
+  },
+  "keywords": [
+    "contentful",
+    "contentful-sync",
+    "sync",
+    "sync-cli",
+    "cli",
+    "command"
+  ],
+  "author": "Keith W. Shaw <keith.w.shaw@gmai.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/keithws/contentful-sync-cli/issues"
+  },
+  "homepage": "https://github.com/keithws/contentful-sync-cli#readme"
+}
