@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+
+"use strict";
+
+const contentfulSync = require("..");
+const version = require("../package.json").version;
+
+const commander = require("commander");
+
+commander
+    .version(version)
+    .option("-q, --quiet", "Progress is not reported to the standard error stream.")
+    .option("-v, --verbose", "Be verbose.")
+    .option("--access-token <access-token>", "Contentful Access Token")
+    .option("--initial", "Fetch everything instead of fetching only what has changed.")
+    .option("--resolve-links <resolve-links>", "Resolve links to other entries and assets.", true)
+    .option("--type <type>", "What to sync: all (default), Asset, Entry, Deletion, DeletedAsset, or DeletedEntry", "all")
+    .option("--content-type <content_type>", "Limit sync to entries of specified content type. Implies --type Entry");
+
+commander.command("fetch <space> [destination]")
+    .description("Fetch content from a space with the Contentful Sync API")
+    .action(function handleAction (space, destination) {
+
+        let options = {
+            "accessToken": commander.accessToken || process.env.CONTENTFUL_ACCESS_TOKEN,
+            "space": space || process.env.CONTENTFUL_SPACE_ID,
+            "destination": destination || ".",
+            "initial": commander.initial || null,
+            "resolveLinks": commander.resolveLinks || true,
+            "type": commander.type || "all",
+            "contentType": commander.contentType || null
+        };
+
+        contentfulSync.fetch(options)
+        .then(() => {
+
+            if (!commander.quiet) {
+
+                console.log("Saved data to %s", options.destination);
+
+            }
+
+        })
+        .catch((err) => {
+
+            console.error(err);
+
+        });
+
+    });
+
+commander.parse(process.argv);
