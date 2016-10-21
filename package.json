@@ -29,8 +29,10 @@
   },
   "homepage": "https://github.com/keithws/contentful-sync-cli#readme",
   "dependencies": {
+    "async": "^2.1.2",
     "commander": "^2.9.0",
-    "contentful": "^3.7.0"
+    "contentful": "^3.7.0",
+    "mkdirp": "^0.5.1"
   },
   "devDependencies": {
     "eslint": "^3.8.1"

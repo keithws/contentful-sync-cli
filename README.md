@@ -24,6 +24,28 @@ The environment variable containing the Contentful Acces Token can and should be
 
 Run `contentful-sync --help` for more details.
 
+```bash
+  Usage: contentful-sync [options] [command]
+
+
+  Commands:
+
+    fetch <space> [destination]  Fetch content from a space with the Contentful Sync API
+
+  Options:
+
+    -h, --help                         output usage information
+    -V, --version                      output the version number
+    -q, --quiet                        Progress is not reported to the standard error stream.
+    -v, --verbose                      Be verbose.
+    -a, --access-token <token>         Contentful Access Token
+    -i, --initial                      Fetch everything instead of fetching only what has changed.
+    -r, --resolve-links <boolean>      Resolve links to other entries and assets.
+    -t, --type <type>                  What to sync: all (default), Asset, Entry, Deletion, DeletedAsset, or DeletedEntry
+    -c, --content-type <content-type>  Limit sync to entries of specified content type. Implies --type Entry
+
+```
+
 ## Library Usage
 
 ```js
@@ -66,8 +88,11 @@ Run `contentful-sync --help` for more details.
 
 ## Todo
 
-* save entries and assets to disk
-* delete deletedEntries and deletedAssets from disk
+* save assets to disk
+* real progress indicator
+* delete deletedAssets from disk
+* lookup default locale for space instead of hardcoding to en-US
+* add support for multiple locales
 
 ## Change Log
 
@@ -81,3 +106,5 @@ _October 20, 2016 – v1.0.0_
 * create bin script and require index.js module
 * create `fetch` sub-command
 * parse command line options and merge with environment variables
+* save entries to disk
+* delete deletedEntries from disk

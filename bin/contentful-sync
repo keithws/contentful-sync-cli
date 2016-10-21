@@ -11,11 +11,11 @@ commander
     .version(version)
     .option("-q, --quiet", "Progress is not reported to the standard error stream.")
     .option("-v, --verbose", "Be verbose.")
-    .option("--access-token <access-token>", "Contentful Access Token")
-    .option("--initial", "Fetch everything instead of fetching only what has changed.")
-    .option("--resolve-links <resolve-links>", "Resolve links to other entries and assets.", true)
-    .option("--type <type>", "What to sync: all (default), Asset, Entry, Deletion, DeletedAsset, or DeletedEntry", "all")
-    .option("--content-type <content_type>", "Limit sync to entries of specified content type. Implies --type Entry");
+    .option("-a, --access-token <token>", "Contentful Access Token")
+    .option("-i, --initial", "Fetch everything instead of fetching only what has changed.")
+    .option("-r, --resolve-links <boolean>", "Resolve links to other entries and assets.", true)
+    .option("-t, --type <type>", "What to sync: all (default), Asset, Entry, Deletion, DeletedAsset, or DeletedEntry", "all")
+    .option("-c, --content-type <content-type>", "Limit sync to entries of specified content type. Implies --type Entry");
 
 commander.command("fetch <space> [destination]")
     .description("Fetch content from a space with the Contentful Sync API")
