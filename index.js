@@ -357,10 +357,10 @@ function fetch (options) {
                     // save entries and assets to disk
                     // and delete deletedEntries and deletedAssets from disk
                     Promise.all([
-                        saveEntriesToDisk(po.entries),
-                        saveAssetsToDisk(po.assets),
-                        deleteEntriesFromDisk(po.deletedEntries),
-                        deleteAssetsFromDisk(po.deletedAssets)
+                        saveEntriesToDisk(po.entries, options.destination),
+                        saveAssetsToDisk(po.assets, options.destination),
+                        deleteEntriesFromDisk(po.deletedEntries, options.destination),
+                        deleteAssetsFromDisk(po.deletedAssets, options.destination)
                     ])
                     .then((results) => {
 

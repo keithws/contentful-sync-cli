@@ -96,6 +96,10 @@ Run `contentful-sync --help` for more details.
 
 ## Change Log
 
+_October 26, 2016 – v1.0.1_
+
+* fixed bug when saving updates to specified path
+
 _October 20, 2016 – v1.0.0_
 
 * call sync api
