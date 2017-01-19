@@ -5,6 +5,7 @@ const path = require("path");
 const contentful = require("contentful");
 const async = require("async");
 const mkdirp = require("mkdirp");
+const glob = require("glob");
 
 
 /**
@@ -112,15 +113,27 @@ function unContentful (entry, locale) {
  * @arg {Object} entry
  * @returns {String} file path for entry
  */
-function getFilePathForEntry (entry) {
+function getFilePathForEntry (entry, destination) {
 
-    let contentType, id;
+    let contentType, file, id, pattern;
 
-    contentType = entry.sys.contentType.sys.id;
     id = entry.sys.id;
+    if (entry.sys.type === "DeletedEntry") {
 
-    return path.join("entries", contentType, `${contentType}_${id}.json`);
+        // deleted entries do not provide the content type
+        // therefore must check all contentType directories
+        contentType = "*";
+        pattern = path.resolve(destination, "entries", contentType, `${contentType}_${id}.json`);
+        file = glob.sync(pattern)[0];
 
+    } else {
+
+        contentType = entry.sys.contentType.sys.id;
+        file = path.join(destination, "entries", contentType, `${contentType}_${id}.json`);
+
+    }
+
+    return file;
 }
 
 
@@ -143,7 +156,7 @@ function saveEntriesToDisk (entries, destination) {
                 let data, file;
 
                 // create file path to save entry to
-                file = path.join(destination, getFilePathForEntry(entry));
+                file = getFilePathForEntry(entry, destination);
 
                 // ensure path exists
                 mkdirp.sync(path.dirname(file));
@@ -215,9 +228,14 @@ function deleteEntriesFromDisk (entries, destination) {
                 let file;
 
                 // create file path to save entry to
-                file = path.join(destination, getFilePathForEntry(entry));
+                file = getFilePathForEntry(entry, destination);
 
-                fs.unlink(file, callback);
+                // safely ignore non-existant files
+                if (file) {
+                    fs.unlink(file, callback);
+                } else {
+                    callback();
+                }
 
             }, (err) => {
 

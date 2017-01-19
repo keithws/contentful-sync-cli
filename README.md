@@ -10,6 +10,8 @@ npm install -g contentful-sync-cli
 
 ## Command Usage
 
+Use of the Contentful Sync API requires an access token from Contentful. It should be stored in the `CONTENTFUL_ACCESS_TOKEN` environment variable.
+
 ```bash
 
 	CONTENTFUL_ACCESS_TOKEN=b4c0n73n7fu1
@@ -20,7 +22,7 @@ npm install -g contentful-sync-cli
 ```
 The current working directory will be populated with the assets and entries from the specified space grouped by content type. Each asset and entry will occupy one file. Each entry will be saved in JSON.
 
-The environment variable containing the Contentful Acces Token can and should be added to your shell profile.
+The environment variable containing the Contentful Acces Token may be added to your shell profile.
 
 Run `contentful-sync --help` for more details.
 
@@ -53,7 +55,7 @@ Run `contentful-sync --help` for more details.
 	const contentfulSync = require('contentful-sync-cli');
 	
 	let options = {
-		"accessToken": "b4c0n73n7fu1",
+		"accessToken": process.env.CONTENTFUL_ACCESS_TOKEN,
 		"space": "cfexampleapi",
 		"destination": "/tmp/contentful-data-cfexampleapi"
 	};
@@ -88,13 +90,17 @@ Run `contentful-sync --help` for more details.
 
 ## Todo
 
+* add tests
 * save assets to disk
-* real progress indicator
 * delete deletedAssets from disk
-* lookup default locale for space instead of hardcoding to en-US
-* add support for multiple locales
+* add command line option to limit entries to one locale
+* a progress indicator
 
 ## Change Log
+
+_January 19, 2017 – v1.0.2_
+
+* fixed bug when syncing a deleted entry
 
 _October 26, 2016 – v1.0.1_
 
