@@ -98,6 +98,11 @@ Run `contentful-sync --help` for more details.
 
 ## Change Log
 
+_January 19, 2017 – v1.0.3_
+
+* fixed bug when an initial sync is run with a specified content type
+* it's an upstream bug so an error is thrown
+
 _January 19, 2017 – v1.0.2_
 
 * fixed bug when syncing a deleted entry

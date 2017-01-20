@@ -293,12 +293,22 @@ function initialSync (options) {
 
         var client = getClient(options);
 
+        // warn about upstream bug
+        if (options.type !== "all") {
+
+            throw new Error("An upstream bug in the contentful.js SDK prevents limiting the type on the initial sync.");
+
+        }
+
         // nextSyncToken not found, do initial sync
         client.sync({
             "initial": true,
             "resolveLinks": false,
-            "type": options.type,
-            "content_type": options.contentType
+            /* specifing the type appears to trigger an upstream bug
+             * see https://github.com/contentful/contentful.js/issues/110
+             * "type": options.type,
+             * "content_type": options.contentType
+             */
         })
         .then((response) => {
 
