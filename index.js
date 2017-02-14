@@ -6,7 +6,13 @@ const contentful = require("contentful");
 const async = require("async");
 const mkdirp = require("mkdirp");
 const glob = require("glob");
+const HttpsProxyAgent = require('https-proxy-agent');
 
+var agent;
+const proxy = process.env.npm_config_https_proxy || process.env.npm_config_proxy || process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+if (proxy) {
+    agent = new HttpsProxyAgent(proxy);
+}
 
 /**
  * setNextSyncToken
@@ -75,7 +81,8 @@ function getClient(options) {
 
     var client = contentful.createClient({
         "space": options.space,
-        "accessToken": options.accessToken
+        "accessToken": options.accessToken,
+        "agent": agent
     });
 
     return client;

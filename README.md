@@ -74,6 +74,23 @@ Run `contentful-sync --help` for more details.
 
 ```
 
+## Usage with a Proxy
+
+To proxy HTTP(S) requests, then set the appropriate npm config variables.
+
+```shell
+npm config set https-proxy http://proxy.example.com:3128/
+npm config set proxy http://proxy.example.com:3128/
+```
+
+If the npm config variables are not found, then these environment variables will be used.
+
+```shell
+HTTPS_PROXY=http://proxy.example.com:3128/
+HTTP_PROXY=http://proxy.example.com:3128/
+```
+
+
 ## Options
 
 ```js
@@ -97,6 +114,10 @@ Run `contentful-sync --help` for more details.
 * a progress indicator
 
 ## Change Log
+
+_February 13, 2017 – v1.1.0_
+
+* added support to optionally proxy HTTP requests
 
 _January 19, 2017 – v1.0.3_
 
