@@ -156,7 +156,7 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
-March 3, 2017 – v2.0.0_
+_March 14, 2017 – v2.0.0_
 
 * fetches from Content Preview API by default
     * unless NODE_ENV === production
