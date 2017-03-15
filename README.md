@@ -156,6 +156,11 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_March 14, 2017 – v2.0.1_
+
+* fixed bug when running fetch sub-command without --host arguement
+* fixed minor bug when logging results of command
+
 _March 14, 2017 – v2.0.0_
 
 * fetches from Content Preview API by default
