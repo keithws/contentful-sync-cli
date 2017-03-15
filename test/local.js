@@ -156,6 +156,57 @@ describe("contentful-local", function () {
 
         });
 
+        it("should get a collection of Entries in the order specified", function (done) {
+
+            client.getEntries({ content_type: "cat", order: "sys.createdAt" }).then(function (entries) {
+
+                should(entries).be.an.Object;
+                should(entries).have.properties("items");
+                should(entries.items).be.an.Array;
+                should(entries.items).have.length(3);
+                should(entries.items[0].sys.id).equal("nyancat");
+                should(entries.items[1].sys.id).equal("happycat");
+                should(entries.items[2].sys.id).equal("garfield");
+                done();
+
+            }).catch(done);
+
+        });
+
+        it("should get a collection of Entries in the reverse order specified", function (done) {
+
+            client.getEntries({ content_type: "cat", order: "-fields.color" }).then(function (entries) {
+
+                should(entries).be.an.Object;
+                should(entries).have.properties("items");
+                should(entries.items).be.an.Array;
+                should(entries.items).have.length(3);
+                should(entries.items[0].fields.color).equal("rainbow");
+                should(entries.items[1].fields.color).equal("orange");
+                should(entries.items[2].fields.color).equal("gray");
+                done();
+
+            }).catch(done);
+
+        });
+
+        it("should get a collection of Entries in the multiple orders specified", function (done) {
+
+            client.getEntries({ content_type: "cat", order: "sys.entry,-fields.lives," }).then(function (entries) {
+
+                should(entries).be.an.Object;
+                should(entries).have.properties("items");
+                should(entries.items).be.an.Array;
+                should(entries.items).have.length(3);
+                should(entries.items[0].fields.lives).equal(1337);
+                should(entries.items[1].fields.lives).equal(9);
+                should(entries.items[2].fields.lives).equal(1);
+                done();
+
+            }).catch(done);
+
+        });
+
     });
 
     describe("#getAsset()", function () {
