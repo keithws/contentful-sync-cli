@@ -235,7 +235,8 @@ describe("contentful-local", function () {
                 .then(client.unWrapCollection).then(function (arr) {
 
                     should(arr).be.an.Array;
-                    should(arr).have.length(4);
+                    should(arr).have.length(5);
+                    arr[0].title.should.be.equal("Doge");
                     done();
 
                 })

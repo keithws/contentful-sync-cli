@@ -14,7 +14,7 @@ Use of the Contentful Sync API requires an access token from Contentful. It shou
 
 ```bash
 
-	CONTENTFUL_ACCESS_TOKEN=b4c0n73n7fu1
+	CONTENTFUL_ACCESS_TOKEN=e5e8d4c5c122cf28fc1af3ff77d28bef78a3952957f15067bbc29f2f0dde0b50
 	mkdir /tmp/contentful-data-cfexampleapi
 	cd /tmp/contentful-data-cfexampleapi
 	contentful-sync fetch cfexampleapi
@@ -45,6 +45,7 @@ Run `contentful-sync --help` for more details.
     -r, --resolve-links <boolean>      Resolve links to other entries and assets.
     -t, --type <type>                  What to sync: all (default), Asset, Entry, Deletion, DeletedAsset, or DeletedEntry
     -c, --content-type <content-type>  Limit sync to entries of specified content type. Implies --type Entry
+    --host <api host>                  Sync from Content Preview API or Content Delivery API
 
 ```
 
@@ -143,19 +144,34 @@ HTTP_PROXY=http://proxy.example.com:3128/
 	"initial": null, // set to true to delete local data files and sync
 	"resolveLinks": true, // links from entries to other entries and assets will also be resolved
 	"type": "all", // OR Asset, Entry, Deletion, DeletedAsset, or DeletedEntry
-	"content_type": null, // type must be Entry
+	"content_type": null, // type must be Entry,
+	"host": null, // API host, defaults to preview.contentful.com unless NODE_ENV is production
 }
 ```
 
 ## Todo
 
-* add tests
-* save assets to disk
-* delete deletedAssets from disk
-* add command line option to limit entries to one locale
+* test for deleted records
 * a progress indicator
 
 ## Change Log
+
+March 3, 2017 – v2.0.0_
+
+* fetches from Content Preview API by default
+    * unless NODE_ENV === production
+* API host may now be specified in the `host` option for #fetch()
+* changed file format to include all locales
+* added library that mirrors the official Contentful Client API
+    * pulls data from local storage
+    * added option to request a specific locale
+    * added option to set a list of fallback locales
+    * resolves one level of linked entries or assets
+    * supports include option for additional levels
+* saves asset records to disk
+* removes deleted asset records from disk
+* added test for initial sync
+* added test for continued sync
 
 _February 13, 2017 – v1.1.0_
 

@@ -84,7 +84,8 @@ function getClient(options) {
     return contentful.createClient({
         "space": options.space,
         "accessToken": options.accessToken,
-        "agent": agent
+        "agent": agent,
+        "host": options.host
     });
 
 }
@@ -338,7 +339,8 @@ function fetch (arguementOptions) {
         let defaultOptions = {
             "destination": ".",
             "resolveLinks": true,
-            "type": "all"
+            "type": "all",
+            "host": process.env.NODE_ENV === "production" ? "cdn.contentful.com" : "preview.contentful.com"
         };
 
         // create options by mising defaults with arguements

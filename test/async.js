@@ -6,9 +6,9 @@ const should = require("should");
 const rimraf = require("rimraf");
 
 
-/* use contentful sample space and access token for tests */
+/* use contentful Preview sample space and access token for tests */
 let options = {
-    "accessToken": "b4c0n73n7fu1",
+    "accessToken": "e5e8d4c5c122cf28fc1af3ff77d28bef78a3952957f15067bbc29f2f0dde0b50",
     "space": "cfexampleapi",
     "destination": "/tmp/contentful-data/cfexampleapi"
 };
@@ -38,7 +38,7 @@ describe("contentful-sync", function () {
                 should(response.entries).have.length(10);
 
                 should(response.assets).be.an.Array;
-                should(response.assets).have.length(4);
+                should(response.assets).have.length(5);
 
                 done();
 
@@ -75,26 +75,6 @@ describe("contentful-sync", function () {
 
         });
 
-        it("should sync from the Delivery API when NODE_ENV=production", function (done) {
-
-            options.initial = true;
-            process.env.NODE_ENV = "production";
-            contentfulSync.fetch(options).then(function (response) {
-
-                should(response).have.property("entries");
-                should(response).have.property("assets");
-
-                should(response.entries).be.an.Array;
-                should(response.assets).be.an.Array;
-
-                // check entry that is different between Preview and Delivery APIs
-                // TODO
-                done();
-
-            }).catch(done);
-
-        });
-
         it("should sync from the Preview API when NODE_ENV=", function (done) {
 
             options.initial = true;
@@ -108,7 +88,75 @@ describe("contentful-sync", function () {
                 should(response.assets).be.an.Array;
 
                 // check entry that is different between Preview and Delivery APIs
-                // TODO
+                should(response.assets).be.an.Array;
+                should(response.assets).have.length(5);
+
+                done();
+
+            }).catch(done);
+
+        });
+
+    });
+
+    describe("#fetch() in production", function () {
+
+        /* use Content Delivery API sample space and access token for this test */
+        before(function () {
+
+            options.accessToken = "b4c0n73n7fu1";
+            options.host = "cdn.contentful.com";
+
+        });
+
+        after(function () {
+
+            options.accessToken = "e5e8d4c5c122cf28fc1af3ff77d28bef78a3952957f15067bbc29f2f0dde0b50";
+            delete options.host;
+
+        });
+
+        it("should sync from the Delivery API when options.host = cdn.contentful.com", function (done) {
+
+            options.host = "cdn.contentful.com";
+            options.initial = true;
+            contentfulSync.fetch(options).then(function (response) {
+
+                should(response).have.property("entries");
+                should(response).have.property("assets");
+
+                should(response.entries).be.an.Array;
+                should(response.assets).be.an.Array;
+
+                // check entry that is different between Preview and Delivery APIs
+                should(response.assets).be.an.Array;
+                should(response.assets).have.length(4);
+
+                done();
+
+            }).catch(done);
+
+        });
+
+
+        it("should sync from the Delivery API when NODE_ENV=production", function (done) {
+
+            /* use Content Delivery API sample space and access token for this test */
+
+            delete options.host;
+            process.env.NODE_ENV = "production";
+            contentfulSync.fetch(options).then(function (response) {
+
+                should(response).have.property("entries");
+                should(response).have.property("assets");
+
+                should(response.entries).be.an.Array;
+                should(response.assets).be.an.Array;
+
+                // check entry that is different between Preview and Delivery APIs
+                should(response.assets).be.an.Array;
+                should(response.assets).have.length(4);
+
                 done();
 
             }).catch(done);

@@ -20,7 +20,8 @@ commander
     .option("-i, --initial", "Fetch everything instead of fetching only what has changed.")
     .option("-r, --resolve-links <boolean>", "Resolve links to other entries and assets.", true)
     .option("-t, --type <type>", "What to sync: all (default), Asset, Entry, Deletion, DeletedAsset, or DeletedEntry", "all")
-    .option("-c, --content-type <content-type>", "Limit sync to entries of specified content type. Implies --type Entry");
+    .option("-c, --content-type <content type>", "Limit sync to entries of specified content type. Implies --type Entry")
+    .option("--host <api host>", "Sync from Content Preview API or Content Delivery API");
 
 commander.command("fetch <space> [destination]")
     .description("Fetch content from a space with the Contentful Sync API")
@@ -33,7 +34,8 @@ commander.command("fetch <space> [destination]")
             "initial": commander.initial || null,
             "resolveLinks": commander.resolveLinks || true,
             "type": commander.type || "all",
-            "contentType": commander.contentType || null
+            "contentType": commander.contentType || null,
+            "host": commander.host || null
         };
 
         contentfulSync.fetch(options)
