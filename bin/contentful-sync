@@ -43,13 +43,19 @@ commander.command("fetch <space> [destination]")
 
             if (!commander.quiet) {
 
-                logger.log("New content: %d entries, %d assets", response.entries.length, response.assets.length);
-                logger.log("Saved sync token for next time.");
+                // detect updated or intial run
+                if (response.deletedEntries) {
 
-                logger.log("New and updated content: %d entries, %d assets", response.entries.length, response.assets.length);
-                logger.log("        Deleted content: %d entries, %d assets", response.deletedEntries.length, response.deletedAssets.length);
-                logger.log("Saved sync token for next time.");
+                    logger.log("New and updated content: %d entries, %d assets", response.entries.length, response.assets.length);
+                    logger.log("        Deleted content: %d entries, %d assets", response.deletedEntries.length, response.deletedAssets.length);
 
+                } else {
+
+                    logger.log("New content: %d entries, %d assets", response.entries.length, response.assets.length);
+
+                }
+
+                logger.log("Saved sync token for next time.");
                 logger.log("Saved data to %s", options.destination);
 
             }
@@ -58,8 +64,8 @@ commander.command("fetch <space> [destination]")
         .catch(err => {
 
             /* eslint-disable no-console */
-            console.error(err);
             logger.setOnce("useLevelPrefixes", true).error(err);
+            console.error(err);
 
         });
 
