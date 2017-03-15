@@ -154,9 +154,9 @@ HTTP_PROXY=http://proxy.example.com:3128/
 * test for deleted records
 * a progress indicator
 * implement more [search parameters][search-parameters]
-	* currently implemented
+	* currently implemented:
 		content_type, order, reverse order, order with multiple parameters
-	* need to implement
+	* need to implement:
 		select, equality, inequality, array equality/inequality, array with multiple values, inclusion, exclusion, ranges, full-text search, full-text search on a field, location proximity search, locations in a bounding object, limit, skip, filtering assets by MIME type, search on references
 
 ## Change Log
