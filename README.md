@@ -164,14 +164,15 @@ _March 14, 2017 – v2.0.0_
 * changed file format to include all locales
 * added library that mirrors the official Contentful Client API
     * pulls data from local storage
-    * added option to request a specific locale
-    * added option to set a list of fallback locales
+        * uses default locale of current Space
+    * added `locale` option to request a specific locale
     * resolves one level of linked entries or assets
-    * supports include option for additional levels
+    * supports `include` option for additional levels
 * saves asset records to disk
 * removes deleted asset records from disk
 * added test for initial sync
 * added test for continued sync
+* added #unWrap() and #unWrapCollection() to return only fields
 
 _February 13, 2017 – v1.1.0_
 
