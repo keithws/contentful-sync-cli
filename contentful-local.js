@@ -475,7 +475,13 @@ function unWrapSync (entry) {
 
     let po;
 
-    if (entry.fields) {
+    if (entry.items) {
+
+        // return collections with thier items unWrapped
+        entry.items = unWrapCollectionSync(entry);
+        return entry;
+
+    } else if (entry.fields) {
 
         po = Object.keys(entry.fields).reduce((acc, v) => {
 
@@ -501,15 +507,32 @@ function unWrapSync (entry) {
 
 
 /**
- * unWrap - Contentful JSON to Plain JSON
- * @arg {Object} entries
- * @returns {Object} plain entries
+ * unWrapCollectionSync - Contentful JSON Collection to Plain JSON Array
+ * @arg {Object} records
+ * @returns {Object} plain objects
  */
-function unWrapCollection (entries) {
+function unWrapCollectionSync (collection) {
 
-    return Promise.all(entries.items.map(entry => unWrap(entry)));
+    return collection.items.map(unWrapSync);
 
 }
+
+
+/**
+ * unWrapCollection - Contentful JSON Collection to Plain JSON Array
+ * @arg {Object} records
+ * @returns {Promise<Object>} Promise of plain objects
+ */
+function unWrapCollection (collection) {
+
+    try {
+        return Promise.resolve(unWrapCollectionSync(collection));
+    } catch (err) {
+        return Promise.reject(err);
+    }
+
+}
+
 
 function createClient (params = {}) {
 
