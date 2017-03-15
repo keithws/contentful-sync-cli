@@ -153,8 +153,14 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 * test for deleted records
 * a progress indicator
+* implement more [search parameters][search-parameters]
 
 ## Change Log
+
+_March 15, 2017 – v2.1.0_
+
+* added test cases for query ordering search parameter
+* implemented support for query ordering
 
 _March 14, 2017 – v2.0.2_
 
@@ -215,4 +221,4 @@ _October 20, 2016 – v1.0.0_
 
 
 [contentful.js]: https://contentful.github.io/contentful.js/
-
+[search-parameters]: https://www.contentful.com/developers/docs/references/content-delivery-api/#/reference/search-parameters
