@@ -35,7 +35,7 @@ commander.command("fetch <space> [destination]")
             "resolveLinks": commander.resolveLinks || true,
             "type": commander.type || "all",
             "contentType": commander.contentType || null,
-            "host": commander.host || null
+            "host": commander.host || process.env.NODE_ENV === "production" ? "cdn.contentful.com" : "preview.contentful.com"
         };
 
         contentfulSync.fetch(options)
