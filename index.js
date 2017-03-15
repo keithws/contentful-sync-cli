@@ -1,3 +1,5 @@
+/* eslint-env node */
+
 "use strict";
 
 const fs = require("fs");
@@ -6,7 +8,7 @@ const contentful = require("contentful");
 const async = require("async");
 const mkdirp = require("mkdirp");
 const glob = require("glob");
-const HttpsProxyAgent = require('https-proxy-agent');
+const HttpsProxyAgent = require("https-proxy-agent");
 
 var agent;
 const proxy = process.env.npm_config_https_proxy || process.env.npm_config_proxy || process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
@@ -79,64 +81,50 @@ function getNextSyncToken(destination) {
  */
 function getClient(options) {
 
-    var client = contentful.createClient({
+    return contentful.createClient({
         "space": options.space,
         "accessToken": options.accessToken,
         "agent": agent
     });
 
-    return client;
 }
 
 
 /**
- * unContentful - Contentful JSON to Plain JSON
- * @arg {Object} entry
- * @returns {Object} plain entry
+ * getFilePath
+ * @arg {Object} record
+ * @returns {String} file path for record
  */
-function unContentful (entry, locale) {
-
-    return Object.keys(entry.fields).reduce((p, c) => {
-
-        if (entry.fields[c][locale] && entry.fields[c][locale].sys) {
-
-            p[c] = entry.fields[c][locale].sys;
-
-        } else {
-
-            p[c] = entry.fields[c][locale];
-
-        }
-
-        return p;
-
-    }, {});
-
-}
-
-
-/**
- * getFilePathForEntry
- * @arg {Object} entry
- * @returns {String} file path for entry
- */
-function getFilePathForEntry (entry, destination) {
+function getFilePath (record, destination) {
 
     let contentType, file, id, pattern;
 
-    id = entry.sys.id;
-    if (entry.sys.type === "DeletedEntry") {
+    id = record.sys.id;
+    switch (record.sys.type) {
+    case "DeletedEntry":
 
         // deleted entries do not provide the content type
         // therefore must check all contentType directories
         contentType = "*";
         pattern = path.resolve(destination, "entries", contentType, `${contentType}_${id}.json`);
         file = glob.sync(pattern)[0];
+        break;
 
-    } else {
+    case "Entry":
 
-        contentType = entry.sys.contentType.sys.id;
+        contentType = record.sys.contentType.sys.id;
         file = path.join(destination, "entries", contentType, `${contentType}_${id}.json`);
+        break;
+
+    case "DeletedAsset":
+
+        file = path.join(destination, "assets", `${id}.json`);
+        break;
+
+    case "Asset":
+
+        file = path.join(destination, "assets", `${id}.json`);
+        break;
 
     }
 
@@ -145,32 +133,36 @@ function getFilePathForEntry (entry, destination) {
 
 
 /**
- * saveEntriesToDisk
- * @arg {Object} entires
+ * saveToDisk
+ * @arg {Object} entries or assets
  * @returns {Promise}
  */
-function saveEntriesToDisk (entries, destination) {
+function saveToDisk (records, destination) {
 
     return new Promise((resolve, reject) => {
 
-        if (entries) {
+        if (records) {
 
-            // TODO get actual locale
-            let locale = "en-US";
+            let results = [];
 
-            async.each(entries, (entry, callback) => {
+            async.each(records, (record, callback) => {
 
-                let data, file;
+                let file;
 
-                // create file path to save entry to
-                file = getFilePathForEntry(entry, destination);
+                // create file path to save record to
+                file = getFilePath(record, destination);
 
                 // ensure path exists
                 mkdirp.sync(path.dirname(file));
 
-                // get a normal JSON object
-                data = unContentful(entry, locale);
-                fs.writeFile(file, JSON.stringify(data, null, 4), callback);
+                // push the results back into an array
+                results.push({
+                    "data": record,
+                    "file": file
+                });
+
+                // save the record to disk
+                fs.writeFile(file, JSON.stringify(record, null, 4), callback);
 
             }, (err) => {
 
@@ -180,7 +172,7 @@ function saveEntriesToDisk (entries, destination) {
 
                 } else {
 
-                    resolve();
+                    resolve(results);
 
                 }
 
@@ -194,48 +186,22 @@ function saveEntriesToDisk (entries, destination) {
 
 
 /**
- * saveAssetsToDisk
- * @arg {Object} assets
- * @returns {Promise}
- */
-function saveAssetsToDisk (assets) {
-
-    return new Promise((resolve, reject) => {
-
-        if (assets) {
-
-            assets.forEach((asset) => {
-
-                asset.foo = "bar";
-
-            });
-
-        }
-
-        resolve();
-
-    });
-
-}
-
-
-/**
- * deleteEntriesFromDisk
+ * deleteFromDisk
  * @arg {Object} entires
  * @returns {Promise}
  */
-function deleteEntriesFromDisk (entries, destination) {
+function deleteFromDisk (records, destination) {
 
     return new Promise((resolve, reject) => {
 
-        if (entries) {
+        if (records) {
 
-            async.each(entries, (entry, callback) => {
+            async.each(records, (record, callback) => {
 
                 let file;
 
-                // create file path to save entry to
-                file = getFilePathForEntry(entry, destination);
+                // create file path to save record to
+                file = getFilePath(record, destination);
 
                 // safely ignore non-existant files
                 if (file) {
@@ -252,7 +218,7 @@ function deleteEntriesFromDisk (entries, destination) {
 
                 } else {
 
-                    resolve();
+                    resolve(records);
 
                 }
 
@@ -266,25 +232,31 @@ function deleteEntriesFromDisk (entries, destination) {
 
 
 /**
- * deleteAssetsFromDisk
- * @arg {Object} assets
- * @returns {Promise}
+ * get metadata for space and save to disk
  */
-function deleteAssetsFromDisk (assets) {
-
+function getSpace(client, dir) {
     return new Promise((resolve, reject) => {
 
-        if (assets) {
+        // fetch metadata for space and save for later
+        client.getSpace().then(space => {
 
-            assets.forEach((asset) => {
+            let file = path.join(dir, "space.json");
 
-                console.dir({ "deletedAsset": asset });
-
+            mkdirp(dir, function (err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    fs.writeFile(file, JSON.stringify(space, null, 4), function (err) {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                }
             });
 
-        }
-
-        resolve();
+        }).catch(reject);
 
     });
 
@@ -296,38 +268,39 @@ function deleteAssetsFromDisk (assets) {
  */
 function initialSync (options) {
 
+    // warn about upstream bug
+    if (options.type !== "all") {
+
+        throw new Error("An upstream bug in the contentful.js SDK prevents limiting the type on the initial sync.");
+
+    }
+
+    var client = getClient(options);
+
     return new Promise((resolve, reject) => {
 
-        var client = getClient(options);
+        // do initial sync
+        Promise.all([
+            getSpace(client, options.destination),
+            client.sync({
+                "initial": true,
+                "resolveLinks": false,
+                /* specifing the type appears to trigger an upstream bug
+                 * see https://github.com/contentful/contentful.js/issues/110
+                 * "type": options.type,
+                 * "content_type": options.contentType
+                 */
+            })
+        ]).then(results => {
 
-        // warn about upstream bug
-        if (options.type !== "all") {
-
-            throw new Error("An upstream bug in the contentful.js SDK prevents limiting the type on the initial sync.");
-
-        }
-
-        // nextSyncToken not found, do initial sync
-        client.sync({
-            "initial": true,
-            "resolveLinks": false,
-            /* specifing the type appears to trigger an upstream bug
-             * see https://github.com/contentful/contentful.js/issues/110
-             * "type": options.type,
-             * "content_type": options.contentType
-             */
-        })
-        .then((response) => {
-
+            let response = results[1];
             const po = response.toPlainObject();
-
-            console.log("New content: %d entries, %d assets", po.entries.length, po.assets.length);
 
             // save entries and assets to disk
             // and delete deletedEntries and deletedAssets from disk
             Promise.all([
-                saveEntriesToDisk(po.entries, options.destination),
-                saveAssetsToDisk(po.assets, options.destination)
+                saveToDisk(po.entries, options.destination),
+                saveToDisk(po.assets, options.destination)
             ])
             .then((results) => {
 
@@ -335,8 +308,10 @@ function initialSync (options) {
                 setNextSyncToken(options.destination, response.nextSyncToken)
                 .then(() => {
 
-                    console.log("Saved sync token for next time.");
-                    resolve(results);
+                    resolve({
+                        "entries": results[0],
+                        "assets": results[1]
+                    });
 
                 }).catch(reject);
 
@@ -355,9 +330,20 @@ function initialSync (options) {
  * @arg {Object} options
  * @returns {Promise} the promise of success or failure
  */
-function fetch (options) {
+function fetch (arguementOptions) {
 
     return new Promise((resolve, reject) => {
+
+        // set default options
+        let defaultOptions = {
+            "destination": ".",
+            "resolveLinks": true,
+            "type": "all"
+        };
+
+        // create options by mising defaults with arguements
+        let options = {};
+        Object.assign(options, defaultOptions, arguementOptions);
 
         // option check
         // type must be Entry if Content Type is specified
@@ -386,16 +372,13 @@ function fetch (options) {
 
                     const po = response.toPlainObject();
 
-                    console.log("New and updated content: %d entries, %d assets", po.entries.length, po.assets.length);
-                    console.log("        Deleted content: %d entries, %d assets", po.deletedEntries.length, po.deletedAssets.length);
-
                     // save entries and assets to disk
                     // and delete deletedEntries and deletedAssets from disk
                     Promise.all([
-                        saveEntriesToDisk(po.entries, options.destination),
-                        saveAssetsToDisk(po.assets, options.destination),
-                        deleteEntriesFromDisk(po.deletedEntries, options.destination),
-                        deleteAssetsFromDisk(po.deletedAssets, options.destination)
+                        saveToDisk(po.entries, options.destination),
+                        saveToDisk(po.assets, options.destination),
+                        deleteFromDisk(po.deletedEntries, options.destination),
+                        deleteFromDisk(po.deletedAssets, options.destination)
                     ])
                     .then((results) => {
 
@@ -403,8 +386,12 @@ function fetch (options) {
                         setNextSyncToken(options.destination, response.nextSyncToken)
                         .then(() => {
 
-                            console.log("Saved sync token for next time.");
-                            resolve(results);
+                            resolve({
+                                "entries": results[0],
+                                "assets": results[1],
+                                "deletedEntries": results[2],
+                                "deletedAssets": results[3]
+                            });
 
                         }).catch(reject);
 

@@ -74,6 +74,48 @@ Run `contentful-sync --help` for more details.
 
 ```
 
+
+### Contentful Client API Usage with local storage
+
+Once the Contentful data is fetched, then it may be accessed with the `contentful-local` library. This library mirrors the [official client API][contentful.js] with the following differences:
+
+By default, you get all entries, instead of 100, with no upper limit.
+
+```js
+
+	const contentful = require("contentful-sync-cli/contentful-local");
+	const client = contentful.createClient({
+		space: "cfexampleapi",
+		localPath: "/tmp/contentful-data-cfexampleapi"
+	});
+	client.getEntries()
+	.then(function (entries) {
+	
+		// log the title for all the entries that have it
+		entries.items.forEach(function (entry) {
+			if(entry.fields.productName) {
+				console.log(entry.fields.productName)
+			}
+		});
+	
+	});
+```
+
+Or, if you would like to limit the number of entries you get:
+
+```js
+
+    client.getEntries({
+        skip: 100,
+        limit: 200,
+        order: 'sys.createdAt'
+    })
+    .then(function (entries) {
+        console.log(entries.items.length) // 200
+    });
+```
+
+
 ## Usage with a Proxy
 
 To proxy HTTP(S) requests, then set the appropriate npm config variables.
@@ -144,3 +186,7 @@ _October 20, 2016 – v1.0.0_
 * parse command line options and merge with environment variables
 * save entries to disk
 * delete deletedEntries from disk
+
+
+[contentful.js]: https://contentful.github.io/contentful.js/
+

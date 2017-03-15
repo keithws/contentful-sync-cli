@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 
+/* eslint-env node */
 "use strict";
 
 const contentfulSync = require("..");
 const version = require("../package.json").version;
 
 const commander = require("commander");
+const logger    = require("eazy-logger").Logger({
+    prefix: "[{green:CF}] ",
+    useLevelPrefixes: false
+});
 
 commander
     .version(version)
@@ -32,18 +37,27 @@ commander.command("fetch <space> [destination]")
         };
 
         contentfulSync.fetch(options)
-        .then(() => {
+        .then((response) => {
 
             if (!commander.quiet) {
 
-                console.log("Saved data to %s", options.destination);
+                logger.log("New content: %d entries, %d assets", response.entries.length, response.assets.length);
+                logger.log("Saved sync token for next time.");
+
+                logger.log("New and updated content: %d entries, %d assets", response.entries.length, response.assets.length);
+                logger.log("        Deleted content: %d entries, %d assets", response.deletedEntries.length, response.deletedAssets.length);
+                logger.log("Saved sync token for next time.");
+
+                logger.log("Saved data to %s", options.destination);
 
             }
 
         })
-        .catch((err) => {
+        .catch(err => {
 
+            /* eslint-disable no-console */
             console.error(err);
+            logger.setOnce("useLevelPrefixes", true).error(err);
 
         });
 
