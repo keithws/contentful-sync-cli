@@ -217,6 +217,102 @@ function readFileFilterLocale (file, query) {
 }
 
 
+/**
+ * helper fuction to get the value of a nest property of an object by "path"
+ * path is a string with property dot notation
+ * i.e. "sys.createdAt" or "fields.image.title"
+ */
+function objectValueByPath(obj, path) {
+    return path.split(".").reduce(function(acc, v) {
+        return acc ? acc[v] : undefined;
+    }, obj);
+}
+
+
+/**
+ * sort fuction to sort arrays of objects by the value of the property
+ * (possibly nested) refernced by the path string
+ */
+function compareObjectsByValueAtPath (path, reverve) {
+
+    let direction = reverve ? -1 : 1;
+
+    return function (a, b) {
+
+        // get values
+        let aValue = objectValueByPath(a, path);
+        let bValue = objectValueByPath(b, path);
+
+        // compare values and apply direction
+        if (aValue > bValue) {
+            return 1 * direction;
+        } else if (aValue < bValue) {
+            return -1 * direction;
+        } else {
+            return 0;
+        }
+
+    };
+
+}
+
+
+/**
+ * sort item by order property in query
+ * @arg {array} items to sort
+ * @arg {query} query object
+ * @returns {Promise<array>} a promise of an array of items
+ */
+function sortItemsByQuery (items, query) {
+    return new Promise(resolve => {
+
+        let order = query.order;
+
+        if (order) {
+
+            // sort items by order property in query
+            // order property document here:
+            // https://www.contentful.com/developers/docs/references/content-delivery-api/#/reference/search-parameters/order
+
+            // split up multiple attributes by comma
+            // and field name and decending or accending
+            let attributes = order.split(",").map(attribute => {
+
+                if (attribute.charAt(0) === "-") {
+                    return {
+                        "field": attribute.slice(1),
+                        "reverse": true
+                    };
+                } else {
+                    return {
+                        "field": attribute,
+                        "reverse": false
+                    };
+                }
+
+            });
+
+            // sort the items by the least specified attribute and repeat
+            attributes.reverse().forEach(attribute => {
+
+                items.sort(compareObjectsByValueAtPath(
+                    attribute.field, attribute.reverse
+                ));
+
+            });
+
+            resolve(items);
+
+        } else {
+
+            // no order specified, so just return the items
+            resolve(items);
+
+        }
+
+    });
+}
+
 function readFilesAndFilter (dir, query) {
     return new Promise((resolve, reject) => {
 
@@ -232,12 +328,14 @@ function readFilesAndFilter (dir, query) {
 
                     Promise.all(
                         files.map(file => readFileFilterLocale(file, query))
-                    ).then(items => {
+                    )
+                    .then(results => sortItemsByQuery(results, query))
+                    .then(results => {
                         resolve({
-                            "total": items.length,
+                            "total": results.length,
                             "skip": 0,
                             "limit": Infinity,
-                            "items": items
+                            "items": results
                         });
                     }).catch(reject);
 
