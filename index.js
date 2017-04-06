@@ -269,16 +269,16 @@ function getSpace(client, dir) {
  */
 function initialSync (options) {
 
-    // warn about upstream bug
-    if (options.type !== "all") {
-
-        throw new Error("An upstream bug in the contentful.js SDK prevents limiting the type on the initial sync.");
-
-    }
-
-    var client = getClient(options);
-
     return new Promise((resolve, reject) => {
+
+        // warn about upstream bug
+        if (options.type !== "all") {
+
+            throw new Error("An upstream bug in the contentful.js SDK prevents limiting the type on the initial sync.");
+
+        }
+
+        var client = getClient(options);
 
         // do initial sync
         Promise.all([
