@@ -161,6 +161,10 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_April 6, 2017 – v2.1.1_
+
+* fixed unhandled promise rejection warning when auth token is not passed
+
 _March 15, 2017 – v2.1.0_
 
 * added test cases for query ordering search parameter
