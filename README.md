@@ -161,6 +161,11 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_May 19, 2017 – v2.1.2_
+
+* fixed bug when ordering sets that included undefined values
+* fixed bug when including whitespace between order attributes in query
+
 _April 6, 2017 – v2.1.1_
 
 * fixed unhandled promise rejection warning when auth token is not passed
