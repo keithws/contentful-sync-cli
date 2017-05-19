@@ -278,6 +278,8 @@ function sortItemsByQuery (items, query) {
             // and field name and decending or accending
             let attributes = order.split(",").map(attribute => {
 
+                attribute = attribute.trim();
+
                 if (attribute.charAt(0) === "-") {
                     return {
                         "field": attribute.slice(1),
