@@ -192,15 +192,15 @@ describe("contentful-local", function () {
 
         it("should get a collection of Entries in the multiple orders specified", function (done) {
 
-            client.getEntries({ content_type: "cat", order: "sys.entry,-fields.lives" }).then(function (entries) {
+            client.getEntries({ content_type: "cat", order: "sys.type, -fields.name" }).then(function (entries) {
 
                 should(entries).be.an.Object;
                 should(entries).have.properties("items");
                 should(entries.items).be.an.Array;
                 should(entries.items).have.length(3);
-                should(entries.items[0].fields.lives).equal(1337);
-                should(entries.items[1].fields.lives).equal(9);
-                should(entries.items[2].fields.lives).equal(1);
+                should(entries.items[0].sys.id).equal("nyancat");
+                should(entries.items[1].sys.id).equal("happycat");
+                should(entries.items[2].sys.id).equal("garfield");
                 done();
 
             }).catch(done);
