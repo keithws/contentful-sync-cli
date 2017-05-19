@@ -243,13 +243,24 @@ function compareObjectsByValueAtPath (path, reverse) {
         let aValue = objectValueByPath(a, path);
         let bValue = objectValueByPath(b, path);
 
-        // compare values and apply direction
-        if (aValue > bValue) {
-            return 1 * direction;
-        } else if (aValue < bValue) {
-            return -1 * direction;
-        } else {
+        // check for undefined or null values which mess up the camparision
+        if ((typeof aValue === "undefined" || aValue === null) && (typeof bValue === "undefined" || bValue === null)) {
             return 0;
+        } else if (typeof aValue === "undefined" || aValue === null) {
+            return -1 * direction;
+        } else if (typeof bValue === "undefined" || bValue === null) {
+            return 1 * direction;
+        } else {
+
+            // compare values and apply direction
+            if (aValue > bValue) {
+                return 1 * direction;
+            } else if (aValue < bValue) {
+                return -1 * direction;
+            } else {
+                return 0;
+            }
+
         }
 
     };
