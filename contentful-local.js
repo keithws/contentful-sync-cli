@@ -233,9 +233,9 @@ function objectValueByPath(obj, path) {
  * sort fuction to sort arrays of objects by the value of the property
  * (possibly nested) refernced by the path string
  */
-function compareObjectsByValueAtPath (path, reverve) {
+function compareObjectsByValueAtPath (path, reverse) {
 
-    let direction = reverve ? -1 : 1;
+    let direction = reverse ? -1 : 1;
 
     return function (a, b) {
 
