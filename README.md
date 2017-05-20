@@ -161,6 +161,10 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_May 19, 2017 – v2.1.3_
+
+* fixed ordering of multiple attributes
+
 _May 19, 2017 – v2.1.2_
 
 * fixed bug when ordering sets that included undefined values
