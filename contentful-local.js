@@ -306,11 +306,17 @@ function sortItemsByQuery (items, query) {
             });
 
             // sort the items by the least specified attribute and repeat
-            attributes.reverse().forEach(attribute => {
+            items.sort(function (a, b) {
 
-                items.sort(compareObjectsByValueAtPath(
-                    attribute.field, attribute.reverse
-                ));
+                // create a list of comparison functions
+                let comparisons = attributes.map(attribute => {
+                    return compareObjectsByValueAtPath(attribute.field, attribute.reverse);
+                });
+
+                // call the comparison functions in order until one of them returns something other than 0 (which means equal)
+                return comparisons.reduce((acc, v) => {
+                    return acc || v(a,b);
+                }, 0);
 
             });
 
