@@ -24,6 +24,14 @@ The current working directory will be populated with the assets and entries from
 
 The environment variable containing the Contentful Acces Token may be added to your shell profile.
 
+### Multiple Spaces
+
+If you need to sync from multiple Contentful Spaces, then you'll need an access token for each space. Then add the Space ID as a suffix to the environment variable name. For example: 
+
+```bash
+CONTENTFUL_ACCESS_TOKEN_cfexampleapi=e5e8d4c5c122cf28fc1af3ff77d28bef78a3952957f15067bbc29f2f0dde0b50
+```
+
 Run `contentful-sync --help` for more details.
 
 ```bash
@@ -160,6 +168,12 @@ HTTP_PROXY=http://proxy.example.com:3128/
 		select, equality, inequality, array equality/inequality, array with multiple values, inclusion, exclusion, ranges, full-text search, full-text search on a field, location proximity search, locations in a bounding object, limit, skip, filtering assets by MIME type, search on references
 
 ## Change Log
+
+_June 1, 2017 – v2.2.0_
+
+* support for multiple spaces
+* fixed bug preventing logger from logging
+* improved logging
 
 _June 1, 2017 – v2.1.4_
 
