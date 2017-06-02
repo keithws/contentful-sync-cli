@@ -161,6 +161,11 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_June 1, 2017 – v2.1.4_
+
+* speed up including linked entries by assuming the field name matches the content type for references
+* refactored getEntry() to use async globbing when the content_type is unknown
+
 _May 19, 2017 – v2.1.3_
 
 * fixed ordering of multiple attributes
