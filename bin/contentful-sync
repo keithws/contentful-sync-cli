@@ -49,20 +49,22 @@ commander.command("fetch <space> [destination]")
 
             if (!commander.quiet) {
 
+                logger.info(`{cyan:Sync completed:} {magenta:${space}}`);
+
                 // detect updated or intial run
                 if (response.deletedEntries) {
 
-                    logger.log("New and updated content: %d entries, %d assets", response.entries.length, response.assets.length);
-                    logger.log("        Deleted content: %d entries, %d assets", response.deletedEntries.length, response.deletedAssets.length);
+                    logger.info("Content updated: %d entries, %d assets", response.entries.length, response.assets.length);
+                    logger.info("Content deleted: %d entries, %d assets", response.deletedEntries.length, response.deletedAssets.length);
 
                 } else {
 
-                    logger.log("New content: %d entries, %d assets", response.entries.length, response.assets.length);
+                    logger.info("Content added: %d entries, %d assets", response.entries.length, response.assets.length);
 
                 }
 
-                logger.log("Saved sync token for next time.");
-                logger.log("Saved data to %s", options.destination);
+                logger.debug("Saved sync token for next time.");
+                logger.debug("Saved data to %s", options.destination);
 
             }
 
