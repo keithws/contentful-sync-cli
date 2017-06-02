@@ -484,34 +484,52 @@ function getContentTypes () {
  * .then(entry => console.log(entry))
  */
 function getEntry (id, query = {}) {
+    return new Promise((resolve, reject) => {
 
-    let dir, file;
+        let dir, file;
 
-    query = processQueryProperties(query);
+        query = processQueryProperties(query);
 
-    normalizeSelect(query);
+        normalizeSelect(query);
 
-    dir = path.resolve(localCachePath, currentSpace, "entries");
-    if (query.content_type) {
+        dir = path.resolve(localCachePath, currentSpace, "entries");
+        if (query.content_type) {
 
-        // limit to content type in query
-        dir = path.resolve(dir, query.content_type);
-        file = path.join(dir, `${query.content_type}_${id}.json`);
+            // limit to content type in query
+            dir = path.resolve(dir, query.content_type);
+            file = path.join(dir, `${query.content_type}_${id}.json`);
+            resolve(readFileFilterLocale(file, query));
 
-    } else {
+        } else {
 
-        // search for id in all content types
-        let pattern = `${dir}/**/*_${id}.json`;
-        let files = glob.sync(pattern);
-        if (files && files.length > 0) {
+            // search for id in all content types
+            // WARN this gets slow
+            let pattern = `${dir}/**/*_${id}.json`;
+            glob(pattern, (err, files) => {
 
-            file = files[0];
+                if (err) {
+                    reject(err);
+                } else {
+
+                    if (files && files.length > 0) {
+
+                        // just take the first match
+                        file = files[0];
+                        resolve(readFileFilterLocale(file, query));
+
+                    } else {
+
+                        reject(new Error(`id not found: ${id}`));
+
+                    }
+
+                }
+
+            });
 
         }
 
-    }
-
-    return readFileFilterLocale(file, query);
+    });
 
 }
 
