@@ -171,7 +171,7 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 _June 1, 2017 – v2.2.0_
 
-* support for multiple spaces
+* check for access tokens in env var with space id
 * fixed bug preventing logger from logging
 * improved logging
 
