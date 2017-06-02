@@ -118,7 +118,12 @@ function resolveLinks (record, query) {
                     sys = record.fields[key].sys;
                     switch(sys.linkType) {
                     case "Entry":
-                        p = getEntry(sys.id, { "include": query.include - 1 });
+                        // TODO the key may not always match the content type
+                        // and getting an entry without the content type means searching ALL the entry files, which gets slow
+                        p = getEntry(sys.id, {
+                            "content_type": key,
+                            "include": query.include - 1
+                        });
                         break;
                     case "Asset":
                         p = getAsset(sys.id, { "include": query.include - 1 });
