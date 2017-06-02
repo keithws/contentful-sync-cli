@@ -27,8 +27,14 @@ commander.command("fetch <space> [destination]")
     .description("Fetch content from a space with the Contentful Sync API")
     .action(function handleAction (space, destination) {
 
+        let accessToken;
+
+        if (space) {
+            accessToken = process.env[`CONTENTFUL_ACCESS_TOKEN_${space}`];
+        }
+
         let options = {
-            "accessToken": commander.accessToken || process.env.CONTENTFUL_ACCESS_TOKEN,
+            "accessToken": commander.accessToken || accessToken || process.env.CONTENTFUL_ACCESS_TOKEN,
             "space": space || process.env.CONTENTFUL_SPACE_ID,
             "destination": destination || ".",
             "initial": commander.initial || null,
