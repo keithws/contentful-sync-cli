@@ -5,7 +5,7 @@
 "use strict";
 
 const path = require("path");
-const fs = require("fs");
+const fs = require("graceful-fs");
 const glob = require("glob");
 
 let clientResolveLinks, defaultLocale, localCachePath, locales, currentSpace;
