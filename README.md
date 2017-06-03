@@ -169,6 +169,10 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_June 2, 2017 – v2.2.1_
+
+* switched to graceful-fs to prevent EMFILE errors
+
 _June 1, 2017 – v2.2.0_
 
 * check for access tokens in env var with space id
