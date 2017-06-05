@@ -8,7 +8,7 @@ const path = require("path");
 const fs = require("graceful-fs");
 const glob = require("glob");
 
-let clientResolveLinks, defaultLocale, localCachePath, locales, currentSpace;
+let clientResolveLinks, defaultLocale, locales;
 
 const resolveLinksLimitMax = 10;
 
@@ -77,148 +77,6 @@ function filterLocale(record, preferredLocaleCode) {
 
     return clone;
 
-}
-
-
-/**
- * resolveLinks
- */
-function resolveLinks (record, query) {
-    return new Promise((resolve, reject) => {
-
-        let fieldsWithLinks, promisesForRecords;
-
-        // to avoid recursive loops, resolving links has a limit
-        if (query.include > 0) {
-
-            // find links in record fields
-            if (record.fields) {
-
-                // get a list of fields that are links or arrays of links
-                fieldsWithLinks = Object.keys(record.fields).filter(key => {
-
-                    if (Array.isArray(record.fields[key])) {
-                        if (record.fields[key][0] && record.fields[key][0].sys) {
-                            return record.fields[key][0].sys.type === "Link";
-                        }
-                    } else {
-                        if (record.fields[key] && record.fields[key].sys) {
-                            return record.fields[key].sys.type === "Link";
-                        }
-                    }
-
-                });
-
-                // get list of promises for the linked records
-                promisesForRecords = fieldsWithLinks.map(key => {
-
-                    let p, sys;
-
-                    // switch on link type
-                    sys = record.fields[key].sys;
-                    switch(sys.linkType) {
-                    case "Entry":
-                        // TODO the key may not always match the content type
-                        // and getting an entry without the content type means searching ALL the entry files, which gets slow
-                        p = getEntry(sys.id, {
-                            "content_type": key,
-                            "include": query.include - 1
-                        });
-                        break;
-                    case "Asset":
-                        p = getAsset(sys.id, { "include": query.include - 1 });
-                        break;
-                    default:
-                        p = Promise.reject(
-                            new Error("Unknown link type: %s", sys.linkType)
-                        );
-                        break;
-                    }
-
-                    return p;
-
-                });
-
-                // resolve promises and update record with linked records
-                Promise.all(promisesForRecords).then(linkedRecords => {
-
-                    fieldsWithLinks.forEach(key => {
-
-                        if (Array.isArray(record.fields[key])) {
-
-                            // field value has multiple links
-                            record.fields[key] = linkedRecords.splice(0, record.fields[key].length);
-
-                        } else {
-
-                            // set the field to the current linked record
-                            record.fields[key] = linkedRecords.shift();
-                        }
-
-                    });
-
-                    resolve(record);
-
-                }).catch(reject);
-
-
-            } else {
-
-                resolve(record);
-
-            }
-
-        } else {
-
-            resolve(record);
-
-        }
-
-    });
-}
-
-
-/**
- * read file and optionally filter fields by locale
- */
-// TODO filter by query
-function readFileFilterLocale (file, query) {
-    return new Promise((resolve, reject) => {
-
-        fs.readFile(file, "utf8", function (err, data) {
-
-            if (err) {
-                reject(err);
-            } else {
-
-                let record = JSON.parse(data);
-
-                getSpace(record)
-                    .then(space => {
-                        return new Promise((resolve) => {
-                            // set default locale
-                            locales = space.locales;
-                            defaultLocale = locales.filter(locale => locale.default)[0];
-                            resolve(defaultLocale);
-                        });
-                    })
-                    .then(defaultLocale => {
-                        return new Promise((resolve) => {
-                            // filter to locale
-                            record = filterLocale(record, query.locale || defaultLocale.code);
-
-                            resolve(record);
-                        });
-                    })
-                    .then(record => resolveLinks(record, query))
-                    .then(resolve)
-                    .catch(reject);
-
-            }
-
-        });
-        
-    });
 }
 
 
@@ -337,50 +195,6 @@ function sortItemsByQuery (items, query) {
     });
 }
 
-function readFilesAndFilter (dir, query) {
-    return new Promise((resolve, reject) => {
-
-        glob(path.join(dir, "**/*.json"), function (err, files) {
-
-            if (err) {
-
-                reject(err);
-
-            } else {
-
-                if (files && files.length > 0) {
-
-                    Promise.all(
-                        files.map(file => readFileFilterLocale(file, query))
-                    )
-                    .then(results => sortItemsByQuery(results, query))
-                    .then(results => {
-                        resolve({
-                            "total": results.length,
-                            "skip": 0,
-                            "limit": Infinity,
-                            "items": results
-                        });
-                    }).catch(reject);
-
-                } else {
-
-                    resolve({
-                        "total": 0,
-                        "skip": 0,
-                        "limit": Infinity,
-                        "items": []
-                    });
-
-                }
-
-            }
-
-        });
-
-    });
-}
-
 
 /**
  * process query properties
@@ -420,106 +234,347 @@ function processQueryProperties (query) {
 }
 
 
-/**
- * Gets the Space which the client is currently configured to use
- * @memberof ContentfulClientAPI
- * @return {Promise<Entities.Space>} Promise for a Space
- * @example
- * client.getSpace()
- * .then(space => console.log(space))
- */
-function getSpace () {
-    return new Promise((resolve, reject) => {
+class Client {
+    constructor(params) {
 
-        let file = path.resolve(localCachePath, currentSpace, "space.json");
+        this.currentSpace = params.space;
+        this.clientResolveLinks = params.resolveLinks;
+        this.localCachePath = params.localPath;
 
-        fs.readFile(file, "utf8", function (err, data) {
-            if (err) {
-                reject(err);
+    }
+    /**
+     * Gets the Space which the client is currently configured to use
+     * @memberof ContentfulClientAPI
+     * @return {Promise<Entities.Space>} Promise for a Space
+     * @example
+     * client.getSpace()
+     * .then(space => console.log(space))
+     */
+    getSpace () {
+        return new Promise((resolve, reject) => {
+
+            let file = path.resolve(this.localCachePath, this.currentSpace, "space.json");
+
+            fs.readFile(file, "utf8", function (err, data) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(JSON.parse(data));
+                }
+            });
+
+        });
+    }
+
+
+    /**
+     * Gets a Content Type
+     * @memberof ContentfulClientAPI
+     * @param  {string} id
+     * @return {Promise<Entities.ContentType>} Promise for a Content Type
+     * @example
+     * client.getContentType('contentTypeId')
+     * .then(contentType => console.log(contentType))
+     */
+    getContentType () {
+        throw new Error("Not implemented.");
+    }
+
+
+    /**
+     * Gets a collection of Content Types
+     * @memberof ContentfulClientAPI
+     * @param  {Object=} query - Object with search parameters. Check the <a href="https://www.contentful.com/developers/docs/javascript/tutorials/using-js-cda-sdk/#retrieving-entries-with-search-parameters">JS SDK tutorial</a> and the <a href="https://www.contentful.com/developers/docs/references/content-delivery-api/#/reference/search-parameters">REST API reference</a> for more details.
+     * @return {Promise<Entities.ContentTypeCollection>} Promise for a collection of Content Types
+     * @example
+     * client.getContentTypes()
+     * .then(contentTypes => console.log(contentTypes.items))
+     */
+    getContentTypes () {
+        throw new Error("Not implemented.");
+    }
+
+
+    /**
+     * Gets an Entry
+     * @memberof ContentfulClientAPI
+     * @param  {string} id
+     * @param  {Object=} query - Object with search parameters. In this method it's only useful for `locale`.
+     * @return {Promise<Entities.Entry>} Promise for an Entry
+     * @example
+     * client.getEntry('entryId')
+     * .then(entry => console.log(entry))
+     */
+    getEntry (id, query = {}) {
+        return new Promise((resolve, reject) => {
+
+            let dir, file;
+
+            query = processQueryProperties(query);
+
+            normalizeSelect(query);
+
+            dir = path.resolve(this.localCachePath, this.currentSpace, "entries");
+            if (query.content_type) {
+
+                // limit to content type in query
+                dir = path.resolve(dir, query.content_type);
+                file = path.join(dir, `${query.content_type}_${id}.json`);
+                resolve(this.readFileFilterLocale(file, query));
+
             } else {
-                resolve(JSON.parse(data));
+
+                // search for id in all content types
+                // WARN this gets slow
+                // TODO update sync function to create a directory of all IDs sans content type for fast lookup when ID is known
+                let pattern = `${dir}/**/*_${id}.json`;
+                glob(pattern, (err, files) => {
+
+                    if (err) {
+                        reject(err);
+                    } else {
+
+                        if (files && files.length > 0) {
+
+                            // just take the first match
+                            file = files[0];
+                            resolve(this.readFileFilterLocale(file, query));
+
+                        } else {
+
+                            reject(new Error(`id not found: ${id}`));
+
+                        }
+
+                    }
+
+                });
+
             }
+
         });
 
-    });
-}
+    }
 
 
-/**
- * Gets a Content Type
- * @memberof ContentfulClientAPI
- * @param  {string} id
- * @return {Promise<Entities.ContentType>} Promise for a Content Type
- * @example
- * client.getContentType('contentTypeId')
- * .then(contentType => console.log(contentType))
- */
-function getContentType () {
-    throw new Error("Not implemented.");
-}
+    /**
+     * Gets a collection of Entries
+     * @memberof ContentfulClientAPI
+     * @param  {Object=} query - Object with search parameters. Check the <a href="https://www.contentful.com/developers/docs/javascript/tutorials/using-js-cda-sdk/#retrieving-entries-with-search-parameters">JS SDK tutorial</a> and the <a href="https://www.contentful.com/developers/docs/references/content-delivery-api/#/reference/search-parameters">REST API reference</a> for more details.
+     * @param  {boolean=} query.resolveLinks - When true, links to other Entries or Assets are resolved. Default: true.
+     * @return {Promise<Entities.EntryCollection>} Promise for a collection of Entries
+     * @example
+     * client.getEntries({content_type: 'contentTypeId'})
+     * .then(entries => console.log(entries.items))
+     */
+    getEntries (query = {}) {
 
-
-/**
- * Gets a collection of Content Types
- * @memberof ContentfulClientAPI
- * @param  {Object=} query - Object with search parameters. Check the <a href="https://www.contentful.com/developers/docs/javascript/tutorials/using-js-cda-sdk/#retrieving-entries-with-search-parameters">JS SDK tutorial</a> and the <a href="https://www.contentful.com/developers/docs/references/content-delivery-api/#/reference/search-parameters">REST API reference</a> for more details.
- * @return {Promise<Entities.ContentTypeCollection>} Promise for a collection of Content Types
- * @example
- * client.getContentTypes()
- * .then(contentTypes => console.log(contentTypes.items))
- */
-function getContentTypes () {
-    throw new Error("Not implemented.");
-}
-
-
-/**
- * Gets an Entry
- * @memberof ContentfulClientAPI
- * @param  {string} id
- * @param  {Object=} query - Object with search parameters. In this method it's only useful for `locale`.
- * @return {Promise<Entities.Entry>} Promise for an Entry
- * @example
- * client.getEntry('entryId')
- * .then(entry => console.log(entry))
- */
-function getEntry (id, query = {}) {
-    return new Promise((resolve, reject) => {
-
-        let dir, file;
+        let dir;
 
         query = processQueryProperties(query);
 
-        normalizeSelect(query);
-
-        dir = path.resolve(localCachePath, currentSpace, "entries");
+        dir = path.resolve(this.localCachePath, this.currentSpace, "entries");
         if (query.content_type) {
 
             // limit to content type in query
             dir = path.resolve(dir, query.content_type);
-            file = path.join(dir, `${query.content_type}_${id}.json`);
-            resolve(readFileFilterLocale(file, query));
 
-        } else {
+        }
 
-            // search for id in all content types
-            // WARN this gets slow
-            let pattern = `${dir}/**/*_${id}.json`;
-            glob(pattern, (err, files) => {
+        return this.readFilesAndFilter(dir, query);
+
+    }
+
+    getAsset (id, query = {}) {
+
+        query = processQueryProperties(query);
+
+        normalizeSelect(query);
+        let dir = path.resolve(this.localCachePath, this.currentSpace, "assets");
+        return this.readFileFilterLocale(path.join(dir, `${id}.json`), query);
+
+    }
+
+    getAssets (query = {}) {
+
+        query = processQueryProperties(query);
+
+        normalizeSelect(query);
+        let dir = path.resolve(this.localCachePath, this.currentSpace, "assets");
+
+        return this.readFilesAndFilter(dir, query);
+
+    }
+
+    parseEntries () {
+        throw new Error("Not implemented.");
+    }
+
+    sync () {
+        throw new Error("Not implemented.");
+    }
+
+
+    /**
+     * unWrap - Contentful JSON to Plain JSON
+     * @arg {Object} entry
+     * @returns {Object} plain entry
+     */
+    unWrap (entry) {
+
+        try {
+            return Promise.resolve(Client.unWrapSync(entry));
+        } catch (err) {
+            return Promise.reject(err);
+        }
+
+    }
+
+
+    /**
+     * unWrap without a promise
+     */
+    static unWrapSync (entry) {
+
+        let po;
+
+        if (entry.items) {
+
+            // return collections with thier items unWrapped
+            entry.items = Client.unWrapCollectionSync(entry);
+            return entry;
+
+        } else if (entry.fields) {
+
+            po = Object.keys(entry.fields).reduce((acc, v) => {
+
+                if (entry.fields[v] && entry.fields[v].sys) {
+
+                    acc[v] = Client.unWrapSync(entry.fields[v]);
+
+                } else {
+
+                    acc[v] = entry.fields[v];
+
+                }
+
+                return acc;
+
+            }, {});
+
+        }
+
+        return po;
+
+    }
+
+
+    /**
+     * unWrapCollectionSync - Contentful JSON Collection to Plain JSON Array
+     * @arg {Object} records
+     * @returns {Object} plain objects
+     */
+    static unWrapCollectionSync (collection) {
+
+        return collection.items.map(Client.unWrapSync);
+
+    }
+
+
+    /**
+     * unWrapCollection - Contentful JSON Collection to Plain JSON Array
+     * @arg {Object} records
+     * @returns {Promise<Object>} Promise of plain objects
+     */
+    unWrapCollection (collection) {
+
+        try {
+            return Promise.resolve(Client.unWrapCollectionSync(collection));
+        } catch (err) {
+            return Promise.reject(err);
+        }
+
+    }
+
+
+    /**
+     * read file and optionally filter fields by locale
+     */
+    // TODO filter by query
+    readFileFilterLocale (file, query) {
+        return new Promise((resolve, reject) => {
+
+            fs.readFile(file, "utf8", (err, data) => {
 
                 if (err) {
                     reject(err);
                 } else {
 
+                    let record = JSON.parse(data);
+
+                    this.getSpace(record)
+                        .then(space => {
+                            return new Promise((resolve) => {
+                                // set default locale
+                                locales = space.locales;
+                                defaultLocale = locales.filter(locale => locale.default)[0];
+                                resolve(defaultLocale);
+                            });
+                        })
+                        .then(defaultLocale => {
+                            return new Promise((resolve) => {
+                                // filter to locale
+                                record = filterLocale(record, query.locale || defaultLocale.code);
+
+                                resolve(record);
+                            });
+                        })
+                        .then(record => this.resolveLinks(record, query))
+                        .then(resolve)
+                        .catch(reject);
+
+                }
+
+            });
+        
+        });
+    }
+
+
+    readFilesAndFilter (dir, query) {
+        return new Promise((resolve, reject) => {
+
+            glob(path.join(dir, "**/*.json"), (err, files) => {
+
+                if (err) {
+
+                    reject(err);
+
+                } else {
+
                     if (files && files.length > 0) {
 
-                        // just take the first match
-                        file = files[0];
-                        resolve(readFileFilterLocale(file, query));
+                        Promise.all(
+                            files.map(file => this.readFileFilterLocale(file, query))
+                        )
+                        .then(results => sortItemsByQuery(results, query))
+                        .then(results => {
+                            resolve({
+                                "total": results.length,
+                                "skip": 0,
+                                "limit": Infinity,
+                                "items": results
+                            });
+                        }).catch(reject);
 
                     } else {
 
-                        reject(new Error(`id not found: ${id}`));
+                        resolve({
+                            "total": 0,
+                            "skip": 0,
+                            "limit": Infinity,
+                            "items": []
+                        });
 
                     }
 
@@ -527,172 +582,112 @@ function getEntry (id, query = {}) {
 
             });
 
-        }
-
-    });
-
-}
-
-
-/**
- * Gets a collection of Entries
- * @memberof ContentfulClientAPI
- * @param  {Object=} query - Object with search parameters. Check the <a href="https://www.contentful.com/developers/docs/javascript/tutorials/using-js-cda-sdk/#retrieving-entries-with-search-parameters">JS SDK tutorial</a> and the <a href="https://www.contentful.com/developers/docs/references/content-delivery-api/#/reference/search-parameters">REST API reference</a> for more details.
- * @param  {boolean=} query.resolveLinks - When true, links to other Entries or Assets are resolved. Default: true.
- * @return {Promise<Entities.EntryCollection>} Promise for a collection of Entries
- * @example
- * client.getEntries({content_type: 'contentTypeId'})
- * .then(entries => console.log(entries.items))
- */
-function getEntries (query = {}) {
-
-    let dir;
-
-    query = processQueryProperties(query);
-
-    dir = path.resolve(localCachePath, currentSpace, "entries");
-    if (query.content_type) {
-
-        // limit to content type in query
-        dir = path.resolve(dir, query.content_type);
-
+        });
     }
 
-    return readFilesAndFilter(dir, query);
 
-}
+    /**
+     * resolveLinks
+     */
+    resolveLinks (record, query) {
+        return new Promise((resolve, reject) => {
 
-function getAsset (id, query = {}) {
+            let fieldsWithLinks, promisesForRecords;
 
-    query = processQueryProperties(query);
+            // to avoid recursive loops, resolving links has a limit
+            if (query.include > 0) {
 
-    normalizeSelect(query);
-    let dir = path.resolve(localCachePath, currentSpace, "assets");
-    return readFileFilterLocale(path.join(dir, `${id}.json`), query);
+                // find links in record fields
+                if (record.fields) {
 
-}
+                    // get a list of fields that are links or arrays of links
+                    fieldsWithLinks = Object.keys(record.fields).filter(key => {
 
-function getAssets (query = {}) {
+                        if (Array.isArray(record.fields[key])) {
+                            if (record.fields[key][0] && record.fields[key][0].sys) {
+                                return record.fields[key][0].sys.type === "Link";
+                            }
+                        } else {
+                            if (record.fields[key] && record.fields[key].sys) {
+                                return record.fields[key].sys.type === "Link";
+                            }
+                        }
 
-    query = processQueryProperties(query);
+                    });
 
-    normalizeSelect(query);
-    let dir = path.resolve(localCachePath, currentSpace, "assets");
+                    // get list of promises for the linked records
+                    promisesForRecords = fieldsWithLinks.map(key => {
 
-    return readFilesAndFilter(dir, query);
+                        let p, sys;
 
-}
+                        // switch on link type
+                        sys = record.fields[key].sys;
+                        switch(sys.linkType) {
+                        case "Entry":
+                            // TODO the key may not always match the content type
+                            // and getting an entry without the content type means searching ALL the entry files, which gets slow
+                            p = this.getEntry(sys.id, {
+                                "content_type": key,
+                                "include": query.include - 1
+                            });
+                            break;
+                        case "Asset":
+                            p = this.getAsset(sys.id, { "include": query.include - 1 });
+                            break;
+                        default:
+                            p = Promise.reject(
+                                new Error("Unknown link type: %s", sys.linkType)
+                            );
+                            break;
+                        }
 
-function parseEntries () {
-    throw new Error("Not implemented.");
-}
+                        return p;
 
-function sync () {
-    throw new Error("Not implemented.");
-}
+                    });
+
+                    // resolve promises and update record with linked records
+                    Promise.all(promisesForRecords).then(linkedRecords => {
+
+                        fieldsWithLinks.forEach(key => {
+
+                            if (Array.isArray(record.fields[key])) {
+
+                                // field value has multiple links
+                                record.fields[key] = linkedRecords.splice(0, record.fields[key].length);
+
+                            } else {
+
+                                // set the field to the current linked record
+                                record.fields[key] = linkedRecords.shift();
+                            }
+
+                        });
+
+                        resolve(record);
+
+                    }).catch(reject);
 
 
-/**
- * unWrap - Contentful JSON to Plain JSON
- * @arg {Object} entry
- * @returns {Object} plain entry
- */
-function unWrap (entry) {
+                } else {
 
-    try {
-        return Promise.resolve(unWrapSync(entry));
-    } catch (err) {
-        return Promise.reject(err);
-    }
+                    resolve(record);
 
-}
-
-
-/**
- * unWrap without a promise
- */
-function unWrapSync (entry) {
-
-    let po;
-
-    if (entry.items) {
-
-        // return collections with thier items unWrapped
-        entry.items = unWrapCollectionSync(entry);
-        return entry;
-
-    } else if (entry.fields) {
-
-        po = Object.keys(entry.fields).reduce((acc, v) => {
-
-            if (entry.fields[v] && entry.fields[v].sys) {
-
-                acc[v] = unWrapSync(entry.fields[v]);
+                }
 
             } else {
 
-                acc[v] = entry.fields[v];
+                resolve(record);
 
             }
 
-            return acc;
-
-        }, {});
-
+        });
     }
-
-    return po;
-
-}
-
-
-/**
- * unWrapCollectionSync - Contentful JSON Collection to Plain JSON Array
- * @arg {Object} records
- * @returns {Object} plain objects
- */
-function unWrapCollectionSync (collection) {
-
-    return collection.items.map(unWrapSync);
-
-}
-
-
-/**
- * unWrapCollection - Contentful JSON Collection to Plain JSON Array
- * @arg {Object} records
- * @returns {Promise<Object>} Promise of plain objects
- */
-function unWrapCollection (collection) {
-
-    try {
-        return Promise.resolve(unWrapCollectionSync(collection));
-    } catch (err) {
-        return Promise.reject(err);
-    }
-
 }
 
 
 function createClient (params = {}) {
 
-    currentSpace = params.space;
-    clientResolveLinks = params.resolveLinks;
-    localCachePath = params.localPath;
-
-    return {
-        getSpace: getSpace,
-        getContentType: getContentType,
-        getContentTypes: getContentTypes,
-        getEntry: getEntry,
-        getEntries: getEntries,
-        getAsset: getAsset,
-        getAssets: getAssets,
-        parseEntries: parseEntries,
-        sync: sync,
-        unWrap: unWrap,
-        unWrapCollection: unWrapCollection
-    };
+    return new Client(params);
 
 }
 
