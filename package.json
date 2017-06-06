@@ -30,7 +30,6 @@
   },
   "homepage": "https://github.com/keithws/contentful-sync-cli#readme",
   "dependencies": {
-    "async": "^2.1.2",
     "commander": "^2.9.0",
     "contentful": "^3.7.0",
     "eazy-logger": "^3.0.2",
