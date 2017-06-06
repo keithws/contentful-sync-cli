@@ -169,6 +169,12 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_June 5, 2017 – v3.0.0_
+
+* refactored getEntry to get entry by ID without glob
+	* required saving/deleting entries to a common folder in addition to the existing folders for each content type
+* replace glob.sync with async glob when deleting entries
+
 _June 2, 2017 – v2.2.1_
 
 * switched to graceful-fs to prevent EMFILE errors
