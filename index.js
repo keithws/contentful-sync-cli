@@ -5,7 +5,6 @@
 const fs = require("graceful-fs");
 const path = require("path");
 const contentful = require("contentful");
-const async = require("async");
 const mkdirp = require("mkdirp");
 const glob = require("glob");
 const HttpsProxyAgent = require("https-proxy-agent");
@@ -97,39 +96,50 @@ function getClient(options) {
  * @returns {String} file path for record
  */
 function getFilePath (record, destination) {
+    return new Promise((resolve, reject) => {
 
-    let contentType, file, id, pattern;
+        let contentType, id, pattern;
 
-    id = record.sys.id;
-    switch (record.sys.type) {
-    case "DeletedEntry":
+        id = record.sys.id;
+        switch (record.sys.type) {
+        case "DeletedEntry":
 
-        // deleted entries do not provide the content type
-        // therefore must check all contentType directories
-        contentType = "*";
-        pattern = path.resolve(destination, "entries", contentType, `${contentType}_${id}.json`);
-        file = glob.sync(pattern)[0];
-        break;
+            // deleted entries do not provide the content type
+            // therefore must check all contentType directories
+            contentType = "*";
+            pattern = path.resolve(destination, "entries", contentType, `${contentType}_${id}.json`);
+            glob(pattern, (err, files) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(files);
+                }
+            });
+            break;
 
-    case "Entry":
+        case "Entry":
 
-        contentType = record.sys.contentType.sys.id;
-        file = path.join(destination, "entries", contentType, `${contentType}_${id}.json`);
-        break;
+            contentType = record.sys.contentType.sys.id;
+            resolve([
+                path.join(destination, "entries", ".all", `${id}.json`),
+                path.join(destination, "entries", contentType, `${contentType}_${id}.json`)
+            ]);
+            break;
 
-    case "DeletedAsset":
+        case "DeletedAsset":
 
-        file = path.join(destination, "assets", `${id}.json`);
-        break;
+            resolve([path.join(destination, "assets", `${id}.json`)]);
+            break;
 
-    case "Asset":
+        case "Asset":
 
-        file = path.join(destination, "assets", `${id}.json`);
-        break;
+            resolve([path.join(destination, "assets", `${id}.json`)]);
+            break;
 
-    }
+        }
 
-    return file;
+    });
+
 }
 
 
@@ -140,48 +150,63 @@ function getFilePath (record, destination) {
  */
 function saveToDisk (records, destination) {
 
-    return new Promise((resolve, reject) => {
+    if (records) {
 
-        if (records) {
+        return Promise.all(records.map(record => {
 
-            let results = [];
+            // generate file paths
+            return getFilePath(record, destination)
+            .then(files => {
 
-            async.each(records, (record, callback) => {
+                // create directories
+                return Promise.all(files.map(file => {
+                    return new Promise((resolve, reject) => {
+                        mkdirp(path.dirname(file), err => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(file);
+                            }
+                        });
+                    });
+                }));
 
-                let file;
+            })
+            .then(files => {
 
-                // create file path to save record to
-                file = getFilePath(record, destination);
+                // write files to disk
+                return Promise.all(files.map(file => {
+                    return new Promise((resolve, reject) => {
+                        fs.writeFile(file, JSON.stringify(record, null, 4), err => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(file);
+                            }
+                        });
+                    });
+                }));
 
-                // ensure path exists
-                mkdirp.sync(path.dirname(file));
+            })
+            .then(files => {
 
                 // push the results back into an array
-                results.push({
-                    "data": record,
-                    "file": file
-                });
-
-                // save the record to disk
-                fs.writeFile(file, JSON.stringify(record, null, 4), callback);
-
-            }, (err) => {
-
-                if (err) {
-
-                    reject(err);
-
-                } else {
-
-                    resolve(results);
-
-                }
+                return Promise.all(files.map((file, index) => {
+                    return Promise.resolve({
+                        "data": records[index],
+                        "file": file
+                    });
+                }));
 
             });
 
-        }
+        }));
 
-    });
+    } else {
+
+        return Promise.resolve();
+
+    }
 
 }
 
@@ -193,41 +218,39 @@ function saveToDisk (records, destination) {
  */
 function deleteFromDisk (records, destination) {
 
-    return new Promise((resolve, reject) => {
+    if (records) {
 
-        if (records) {
+        return Promise.all(records.map(record => {
 
-            async.each(records, (record, callback) => {
+            // get paths where the record is saved
+            return getFilePath(record, destination)
+            .then(files => {
+                return Promise.all(files.map(file => {
 
-                let file;
-
-                // create file path to save record to
-                file = getFilePath(record, destination);
-
-                // safely ignore non-existant files
-                if (file) {
-                    fs.unlink(file, callback);
-                } else {
-                    callback();
-                }
-
-            }, (err) => {
-
-                if (err) {
-
-                    reject(err);
-
-                } else {
-
-                    resolve(records);
-
-                }
-
+                    // safely ignore non-existant files
+                    if (file) {
+                        return Promise((resolve, reject) => {
+                            fs.unlink(file, err => {
+                                if (err) {
+                                    reject(err);
+                                } else {
+                                    resolve();
+                                }
+                            });
+                        });
+                    } else {
+                        return Promise.resolve();
+                    }
+                }));
             });
 
-        }
+        }));
 
-    });
+    } else {
+
+        return Promise.resolve();
+
+    }
 
 }
 
@@ -285,7 +308,7 @@ function initialSync (options) {
             getSpace(client, options.destination),
             client.sync({
                 "initial": true,
-                "resolveLinks": false,
+                "resolveLinks": false
                 /* specifing the type appears to trigger an upstream bug
                  * see https://github.com/contentful/contentful.js/issues/110
                  * "type": options.type,

@@ -306,7 +306,7 @@ class Client {
      * .then(entry => console.log(entry))
      */
     getEntry (id, query = {}) {
-        return new Promise((resolve, reject) => {
+        return new Promise(resolve => {
 
             let dir, file;
 
@@ -320,37 +320,16 @@ class Client {
                 // limit to content type in query
                 dir = path.resolve(dir, query.content_type);
                 file = path.join(dir, `${query.content_type}_${id}.json`);
-                resolve(this.readFileFilterLocale(file, query));
 
             } else {
 
-                // search for id in all content types
-                // WARN this gets slow
-                // TODO update sync function to create a directory of all IDs sans content type for fast lookup when ID is known
-                let pattern = `${dir}/**/*_${id}.json`;
-                glob(pattern, (err, files) => {
-
-                    if (err) {
-                        reject(err);
-                    } else {
-
-                        if (files && files.length > 0) {
-
-                            // just take the first match
-                            file = files[0];
-                            resolve(this.readFileFilterLocale(file, query));
-
-                        } else {
-
-                            reject(new Error(`id not found: ${id}`));
-
-                        }
-
-                    }
-
-                });
+                // look in the .all dir
+                dir = path.resolve(dir, ".all");
+                file = path.join(dir, `${id}.json`);
 
             }
+
+            resolve(this.readFileFilterLocale(file, query));
 
         });
 
@@ -624,12 +603,7 @@ class Client {
                         sys = record.fields[key].sys;
                         switch(sys.linkType) {
                         case "Entry":
-                            // TODO the key may not always match the content type
-                            // and getting an entry without the content type means searching ALL the entry files, which gets slow
-                            p = this.getEntry(sys.id, {
-                                "content_type": key,
-                                "include": query.include - 1
-                            });
+                            p = this.getEntry(sys.id, { "include": query.include - 1 });
                             break;
                         case "Asset":
                             p = this.getAsset(sys.id, { "include": query.include - 1 });
