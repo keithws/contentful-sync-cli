@@ -486,7 +486,14 @@ class Client {
             fs.readFile(file, "utf8", (err, data) => {
 
                 if (err) {
-                    reject(err);
+                    if (err.code === "ENOENT") {
+
+                        // return undefined when the requested entry cannot be found
+                        resolve();
+
+                    } else {
+                        reject(err);
+                    }
                 } else {
 
                     let record = JSON.parse(data);
