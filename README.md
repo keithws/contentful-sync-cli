@@ -169,6 +169,10 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_October 16, 2017 – v3.0.1_
+
+* return undefined when entry cannot be found
+
 _June 5, 2017 – v3.0.0_
 
 * refactored getEntry to get entry by ID without glob
