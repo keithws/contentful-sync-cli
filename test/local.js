@@ -69,6 +69,12 @@ describe("contentful-local", function () {
 
         });
 
+        it("should return an undefined when entry cannot be found", function () {
+
+            return client.getEntry("monty").should.be.fulfilledWith(undefined);
+
+        });
+
         it("should return an error for an Entry to a unknown locale", function () {
 
             let invalidLocale = "asdf";
