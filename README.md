@@ -169,6 +169,10 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_October 17, 2017 – v3.0.2_
+
+* fixed bug when sync'ing deleted assets/entries
+
 _October 16, 2017 – v3.0.1_
 
 * return undefined when entry cannot be found
