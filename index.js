@@ -229,7 +229,7 @@ function deleteFromDisk (records, destination) {
 
                     // safely ignore non-existant files
                     if (file) {
-                        return Promise((resolve, reject) => {
+                        return new Promise((resolve, reject) => {
                             fs.unlink(file, err => {
                                 if (err) {
                                     reject(err);
