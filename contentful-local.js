@@ -427,7 +427,17 @@ class Client {
 
             po = Object.keys(entry.fields).reduce((acc, v) => {
 
-                if (entry.fields[v] && entry.fields[v].sys) {
+                if (Array.isArray(entry.fields[v])) {
+
+                    acc[v] = entry.fields[v].map(item => {
+                        if (item && item.sys) {
+                            return Client.unWrapSync(item);
+                        } else {
+                            return item;
+                        }
+                    });
+
+                } else if (entry.fields[v] && entry.fields[v].sys) {
 
                     acc[v] = Client.unWrapSync(entry.fields[v]);
 
@@ -602,29 +612,36 @@ class Client {
                     });
 
                     // get list of promises for the linked records
-                    promisesForRecords = fieldsWithLinks.map(key => {
+                    promisesForRecords = fieldsWithLinks.reduce((acc, key) => {
 
-                        let p, sys;
+                        let promises, values;
 
-                        // switch on link type
-                        sys = record.fields[key].sys;
-                        switch(sys.linkType) {
-                        case "Entry":
-                            p = this.getEntry(sys.id, { "include": query.include - 1 });
-                            break;
-                        case "Asset":
-                            p = this.getAsset(sys.id, { "include": query.include - 1 });
-                            break;
-                        default:
-                            p = Promise.reject(
-                                new Error("Unknown link type: %s", sys.linkType)
-                            );
-                            break;
+                        if (Array.isArray(record.fields[key])) {
+                            values = record.fields[key];
+                        } else {
+                            values = [record.fields[key]];
                         }
 
-                        return p;
+                        promises = values.map(value => {
 
-                    });
+                            let sys = value.sys;
+
+                            // switch on link type
+                            switch (sys.linkType) {
+                            case "Entry":
+                                return this.getEntry(sys.id, { "include": query.include - 1 });
+                            case "Asset":
+                                return this.getAsset(sys.id, { "include": query.include - 1 });
+                            default:
+                                return Promise.reject(
+                                    new Error(`Unknown system link type: ${sys.linkType}`)
+                                );
+                            }
+                        });
+
+                        return acc.concat(promises);
+
+                    }, []);
 
                     // resolve promises and update record with linked records
                     Promise.all(promisesForRecords).then(linkedRecords => {
