@@ -169,6 +169,10 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_January 5, 2018 – v3.0.3_
+
+* fixed bugs with 'reference, many' field types
+
 _October 17, 2017 – v3.0.2_
 
 * fixed bug when sync'ing deleted assets/entries
