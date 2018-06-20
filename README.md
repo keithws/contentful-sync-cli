@@ -169,6 +169,11 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_June 19, 2018 – v3.0.4_
+
+* updated deps
+* updated test to work with contentful 6.0
+
 _January 5, 2018 – v3.0.3_
 
 * fixed bugs with 'reference, many' field types
