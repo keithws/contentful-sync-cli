@@ -155,8 +155,7 @@ function saveToDisk (records, destination) {
         return Promise.all(records.map(record => {
 
             // generate file paths
-            return getFilePath(record, destination)
-            .then(files => {
+            return getFilePath(record, destination).then(files => {
 
                 // create directories
                 return Promise.all(files.map(file => {
@@ -171,8 +170,7 @@ function saveToDisk (records, destination) {
                     });
                 }));
 
-            })
-            .then(files => {
+            }).then(files => {
 
                 // write files to disk
                 return Promise.all(files.map(file => {
@@ -187,8 +185,7 @@ function saveToDisk (records, destination) {
                     });
                 }));
 
-            })
-            .then(files => {
+            }).then(files => {
 
                 // push the results back into an array
                 return Promise.all(files.map((file, index) => {
@@ -223,8 +220,8 @@ function deleteFromDisk (records, destination) {
         return Promise.all(records.map(record => {
 
             // get paths where the record is saved
-            return getFilePath(record, destination)
-            .then(files => {
+            return getFilePath(record, destination).then(files => {
+
                 return Promise.all(files.map(file => {
 
                     // safely ignore non-existant files
@@ -241,7 +238,9 @@ function deleteFromDisk (records, destination) {
                     } else {
                         return Promise.resolve();
                     }
+
                 }));
+
             });
 
         }));
@@ -323,14 +322,16 @@ function initialSync (options) {
             // save entries and assets to disk
             // and delete deletedEntries and deletedAssets from disk
             Promise.all([
+
                 saveToDisk(po.entries, options.destination),
                 saveToDisk(po.assets, options.destination)
-            ])
-            .then((results) => {
+
+            ]).then((results) => {
 
                 // store the new token
-                setNextSyncToken(options.destination, response.nextSyncToken)
-                .then(() => {
+                setNextSyncToken(
+                    options.destination, response.nextSyncToken
+                ).then(() => {
 
                     resolve({
                         "entries": results[0],
@@ -339,8 +340,7 @@ function initialSync (options) {
 
                 }).catch(reject);
 
-            })
-            .catch(reject);
+            }).catch(reject);
 
         }).catch(reject);
 
@@ -386,30 +386,32 @@ function fetch (arguementOptions) {
         } else {
 
             // if destination exists and contains the nextSyncToken then this is not the initial sync
-            getNextSyncToken(options.destination)
-            .then((nextSyncToken) => {
+            getNextSyncToken(options.destination).then((nextSyncToken) => {
 
                 var client = getClient(options);
 
                 // got nextSyncToken, continue the sync
-                client.sync({"nextSyncToken": nextSyncToken})
-                .then((response) => {
+                client.sync({
+                    "nextSyncToken": nextSyncToken
+                }).then((response) => {
 
                     const po = response.toPlainObject();
 
                     // save entries and assets to disk
                     // and delete deletedEntries and deletedAssets from disk
                     Promise.all([
+
                         saveToDisk(po.entries, options.destination),
                         saveToDisk(po.assets, options.destination),
                         deleteFromDisk(po.deletedEntries, options.destination),
                         deleteFromDisk(po.deletedAssets, options.destination)
-                    ])
-                    .then((results) => {
+
+                    ]).then((results) => {
 
                         // store the new token
-                        setNextSyncToken(options.destination, response.nextSyncToken)
-                        .then(() => {
+                        setNextSyncToken(
+                            options.destination, response.nextSyncToken
+                        ).then(() => {
 
                             resolve({
                                 "entries": results[0],
@@ -420,13 +422,11 @@ function fetch (arguementOptions) {
 
                         }).catch(reject);
 
-                    })
-                    .catch(reject);
+                    }).catch(reject);
 
                 }).catch(reject);
 
-            })
-            .catch((err) => {
+            }).catch((err) => {
 
                 // check for expected "No Entry" error
                 if (err && err.code && err.code === "ENOENT") {

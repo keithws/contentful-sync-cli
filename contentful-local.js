@@ -552,9 +552,9 @@ class Client {
 
                         Promise.all(
                             files.map(file => this.readFileFilterLocale(file, query))
-                        )
-                        .then(results => sortItemsByQuery(results, query))
-                        .then(results => {
+                        ).then(
+                            results => sortItemsByQuery(results, query)
+                        ).then(results => {
                             resolve({
                                 "total": results.length,
                                 "skip": 0,

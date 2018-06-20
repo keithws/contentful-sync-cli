@@ -44,8 +44,7 @@ commander.command("fetch <space> [destination]")
             "host": commander.host || process.env.NODE_ENV === "production" ? "cdn.contentful.com" : "preview.contentful.com"
         };
 
-        contentfulSync.fetch(options)
-        .then((response) => {
+        contentfulSync.fetch(options).then((response) => {
 
             if (!commander.quiet) {
 
@@ -68,8 +67,7 @@ commander.command("fetch <space> [destination]")
 
             }
 
-        })
-        .catch(err => {
+        }).catch(err => {
 
             /* eslint-disable no-console */
             logger.setOnce("useLevelPrefixes", true).error(err);

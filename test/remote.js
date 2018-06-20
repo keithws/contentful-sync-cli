@@ -50,7 +50,7 @@ describe("contentful-remote", function () {
 
                 should(entry).be.an.Object;
                 should(entry).have.properties("sys", "fields");
-                should(entry.fields.name).equal("Nyan vIghro\'");
+                should(entry.fields.name).equal("Nyan vIghro'");
                 entry.fields.color.should.be.equal("rainbow");
                 done();
 
