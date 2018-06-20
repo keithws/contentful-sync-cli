@@ -30,17 +30,17 @@
   },
   "homepage": "https://github.com/keithws/contentful-sync-cli#readme",
   "dependencies": {
-    "commander": "^2.9.0",
-    "contentful": "^3.7.0",
-    "eazy-logger": "^3.0.2",
-    "graceful-fs": "^4.1.11",
-    "https-proxy-agent": "^1.0.0",
-    "mkdirp": "^0.5.1"
+    "commander": "^2.0.0",
+    "contentful": "^6.1.1",
+    "eazy-logger": "^3.0.0",
+    "graceful-fs": "^4.0.0",
+    "https-proxy-agent": "^2.2.0",
+    "mkdirp": "^0.5.0"
   },
   "devDependencies": {
-    "eslint": "^3.8.1",
-    "mocha": "^3.2.0",
-    "rimraf": "^2.6.1",
-    "should": "^11.2.0"
+    "eslint": "^4.19.1",
+    "mocha": "^5.2.0",
+    "rimraf": "^2.0.0",
+    "should": "^11.0.0"
   }
 }
