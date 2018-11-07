@@ -4,7 +4,6 @@
 const should = require("should");
 const contentful = require("../contentful-local");
 
-/* eslint-disable no-console */
 const client = contentful.createClient({
     space: "cfexampleapi",
     localPath: "/tmp/contentful-data"
@@ -309,7 +308,7 @@ describe("contentful-local", function () {
                 .then(client.unWrapCollection).then(function (arr) {
 
                     should(arr).be.an.Array;
-                    should(arr).have.length(5);
+                    should(arr).have.length(4);
                     arr[0].title.should.be.equal("Doge");
                     done();
 
