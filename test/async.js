@@ -4,6 +4,8 @@
 const contentfulSync = require("..");
 const should = require("should");
 const rimraf = require("rimraf");
+const http = require("http");
+const setup = require("proxy");
 
 
 /* use contentful Preview sample space and access token for tests */
@@ -18,7 +20,7 @@ describe("contentful-sync", function () {
     this.slow(400);
     this.timeout(1600);
 
-    before(function (done) {
+    beforeEach(function (done) {
 
         rimraf(options.destination, done);
 
@@ -52,24 +54,29 @@ describe("contentful-sync", function () {
 
         it("should only sync deltas", function (done) {
 
-            options.initial = false;
-            contentfulSync.fetch(options).then(function (response) {
+            options.initial = true;
+            contentfulSync.fetch(options).then(function () {
 
-                should(response).have.property("entries");
-                should(response).have.property("assets");
-                should(response).have.property("deletedEntries");
-                should(response).have.property("deletedAssets");
+                options.initial = false;
+                contentfulSync.fetch(options).then(function (response) {
 
-                should(response.entries).be.an.Array;
-                should(response.assets).be.an.Array;
-                should(response.deletedEntries).be.an.Array;
-                should(response.deletedAssets).be.an.Array;
+                    should(response).have.property("entries");
+                    should(response).have.property("assets");
+                    should(response).have.property("deletedEntries");
+                    should(response).have.property("deletedAssets");
 
-                should(response.entries).be.empty;
-                should(response.assets).be.empty;
-                should(response.deletedEntries).be.empty;
-                should(response.deletedAssets).be.empty;
-                done();
+                    should(response.entries).be.an.Array;
+                    should(response.assets).be.an.Array;
+                    should(response.deletedEntries).be.an.Array;
+                    should(response.deletedAssets).be.an.Array;
+
+                    should(response.entries).be.empty;
+                    should(response.assets).be.empty;
+                    should(response.deletedEntries).be.empty;
+                    should(response.deletedAssets).be.empty;
+                    done();
+
+                }).catch(done);
 
             }).catch(done);
 
@@ -88,6 +95,60 @@ describe("contentful-sync", function () {
                 should(response.assets).be.an.Array;
 
                 // check entry that is different between Preview and Delivery APIs
+                should(response.assets).be.an.Array;
+                should(response.assets).have.length(5);
+
+                done();
+
+            }).catch(done);
+
+        });
+
+    });
+
+    describe("#fetch() via an HTTP proxy", function () {
+
+        let server;
+
+        before(function (done) {
+
+            // setup proxy
+            server = setup(http.createServer());
+            server.listen(3128, function () {
+
+                var port = server.address().port;
+
+                process.env.HTTPS_PROXY = `http://localhost:${port}/`;
+
+                done();
+
+            });
+
+        });
+
+        after(function (done) {
+
+            // remove proxy config
+            delete process.env.HTTPS_PROXY;
+
+            // tear down proxy
+            server.close();
+            done();
+
+        });
+
+        it("should populate destination with JSON files", function (done) {
+
+            options.initial = true;
+
+            contentfulSync.fetch(options).then(function (response) {
+
+                should(response).have.property("entries");
+                should(response).have.property("assets");
+
+                should(response.entries).be.an.Array;
+                should(response.entries).have.length(10);
+
                 should(response.assets).be.an.Array;
                 should(response.assets).have.length(5);
 
@@ -156,6 +217,9 @@ describe("contentful-sync", function () {
                 // check entry that is different between Preview and Delivery APIs
                 should(response.assets).be.an.Array;
                 should(response.assets).have.length(4);
+
+                delete process.env.NODE_ENV;
+                options.host = "cdn.contentful.com";
 
                 done();
 

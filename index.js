@@ -9,12 +9,6 @@ const mkdirp = require("mkdirp");
 const glob = require("glob");
 const HttpsProxyAgent = require("https-proxy-agent");
 
-var agent;
-const proxy = process.env.npm_config_https_proxy || process.env.npm_config_proxy || process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
-if (proxy) {
-    agent = new HttpsProxyAgent(proxy);
-}
-
 /**
  * setNextSyncToken
  * @arg {String} destination - path on local disk
@@ -80,12 +74,17 @@ function getNextSyncToken(destination) {
  */
 function getClient(options) {
 
-    return contentful.createClient({
-        "space": options.space,
-        "accessToken": options.accessToken,
-        "agent": agent,
-        "host": options.host
-    });
+    var agent;
+    const proxy = process.env.npm_config_https_proxy || process.env.HTTPS_PROXY;
+    if (proxy) {
+        agent = new HttpsProxyAgent(proxy);
+    }
+
+    options.agent = options.agent || agent;
+    options.httpAgent = options.httpAgent || agent;
+    options.httpsAgent = options.httpsAgent || agent;
+
+    return contentful.createClient(options);
 
 }
 
