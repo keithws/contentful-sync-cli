@@ -169,6 +169,13 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_November 6, 2018 – v3.0.5_
+
+* updated deps
+* updated tests to work with contentful 7.0
+* added test case to test sync through HTTP proxy
+* fixed bug where proxy settings did not get applied
+
 _June 19, 2018 – v3.0.4_
 
 * updated deps
