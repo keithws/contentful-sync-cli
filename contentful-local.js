@@ -259,7 +259,16 @@ class Client {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(JSON.parse(data));
+
+                    try {
+                        const space = JSON.parse(data);
+                        resolve(space);
+                    } catch (err) {
+                        console.error(`Error in file: ${file}`);
+                        console.error(`${data}`);
+                        reject(err);
+                    }
+
                 }
             });
 
@@ -506,7 +515,14 @@ class Client {
                     }
                 } else {
 
-                    let record = JSON.parse(data);
+                    let record;
+                    try {
+                        record = JSON.parse(data);
+                    } catch (err) {
+                        console.error(`Error in file: ${file}`);
+                        console.error(`${data}`);
+                        throw err;
+                    }
 
                     this.getSpace(record)
                         .then(space => {
