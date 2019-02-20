@@ -169,6 +169,10 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_February 19, 2019 – v3.0.7_
+
+* updated dependencies to resolve security issues
+
 _January 8, 2019 – v3.0.6_
 
 * added additional error handling for malformed JSON data
