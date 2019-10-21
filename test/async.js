@@ -37,10 +37,10 @@ describe("contentful-sync", function () {
                 should(response).have.property("assets");
 
                 should(response.entries).be.an.Array;
-                should(response.entries).have.length(10);
+                should(response.entries).have.length(11);
 
                 should(response.assets).be.an.Array;
-                should(response.assets).have.length(5);
+                should(response.assets).have.length(6);
 
                 done();
 
@@ -96,7 +96,7 @@ describe("contentful-sync", function () {
 
                 // check entry that is different between Preview and Delivery APIs
                 should(response.assets).be.an.Array;
-                should(response.assets).have.length(5);
+                should(response.assets).have.length(6);
 
                 done();
 
@@ -147,10 +147,10 @@ describe("contentful-sync", function () {
                 should(response).have.property("assets");
 
                 should(response.entries).be.an.Array;
-                should(response.entries).have.length(10);
+                should(response.entries).have.length(11);
 
                 should(response.assets).be.an.Array;
-                should(response.assets).have.length(5);
+                should(response.assets).have.length(6);
 
                 done();
 
