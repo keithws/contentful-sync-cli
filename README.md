@@ -169,6 +169,11 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_October 21, 2019 – v3.0.8_
+
+* updated dependencies to resolve security issues
+* use Object.prototype.hasOwnProperties to prevent possible misuse of obj.hasOwnProperties
+
 _February 19, 2019 – v3.0.7_
 
 * updated dependencies to resolve security issues
