@@ -68,7 +68,7 @@ function filterLocale(record, preferredLocaleCode) {
     if (clone.fields) {
 
         for (field in clone.fields) {
-            if (clone.fields.hasOwnProperty(field)) {
+            if (Object.prototype.hasOwnProperty.call(clone.fields, field)) {
                 clone.fields[field] = fieldWithLocaleFallback(field, clone.fields[field], locale.code);
             }
         }
