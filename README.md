@@ -169,6 +169,11 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_October 21, 2019 – v3.0.9_
+
+* updated all deps to latest
+* resolved security issue with older version of eslint
+
 _October 21, 2019 – v3.0.8_
 
 * updated dependencies to resolve security issues
