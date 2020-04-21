@@ -169,6 +169,10 @@ HTTP_PROXY=http://proxy.example.com:3128/
 
 ## Change Log
 
+_April 21, 2020 – v3.0.10_
+
+* updated all dependencies to latest
+
 _October 21, 2019 – v3.0.9_
 
 * updated all deps to latest
