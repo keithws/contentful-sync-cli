@@ -35,7 +35,7 @@
     "eazy-logger": "^3.0.2",
     "graceful-fs": "^4.2.3",
     "https-proxy-agent": "^5.0.0",
-    "mkdirp": "^0.5.1"
+    "mkdirp": "^1.0.4"
   },
   "devDependencies": {
     "eslint": "^6.8.0",

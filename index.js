@@ -158,14 +158,11 @@ function saveToDisk (records, destination) {
 
                 // create directories
                 return Promise.all(files.map(file => {
-                    return new Promise((resolve, reject) => {
-                        mkdirp(path.dirname(file), err => {
-                            if (err) {
-                                reject(err);
-                            } else {
-                                resolve(file);
-                            }
-                        });
+                    return mkdirp(path.dirname(file)).then(made => {
+
+                        process.env.DEBUG && console.log(`made directories: ${made}`);
+                        return Promise.resolve(file);
+
                     });
                 }));
 
@@ -262,20 +259,19 @@ function getSpace(client, dir) {
         // fetch metadata for space and save for later
         client.getSpace().then(space => {
 
-            let file = path.join(dir, "space.json");
+            mkdirp(dir).then(made => {
 
-            mkdirp(dir, function (err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    fs.writeFile(file, JSON.stringify(space, null, 4), function (err) {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    });
-                }
+                process.env.DEBUG && console.log(`made directories: ${made}`);
+
+                let file = path.join(dir, "space.json");
+                fs.writeFile(file, JSON.stringify(space, null, 4), function (err) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                });
+
             });
 
         }).catch(reject);
