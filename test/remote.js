@@ -61,15 +61,19 @@ describe("contentful-remote", function () {
         it("should return an error for an Entry to a unknown locale", function (done) {
 
             client.getEntry("nyancat", { locale: "asdf" })
-                .then().catch(function (entry) {
+                .then().catch(function (data) {
 
-                    should(entry).be.an.Object;
-                    should(entry).have.properties("response");
-                    should(entry.response).have.properties("data");
-                    should(entry.response.data).have.properties("sys");
-                    entry.response.data.sys.type.should.equal("Error");
-                    entry.response.data.message.should.equal("Unknown locale: asdf");
-                    done();
+                    try {
+                        should(data).be.an.Object;
+                        should(data).have.properties(["sys", "message"]);
+                        should(data).have.properties("message");
+                        data.sys.type.should.equal("Error");
+                        data.message.should.equal("Unknown locale: asdf");
+                        done();
+                    } catch (err) {
+                        console.log(data);
+                        done(err);
+                    }
 
                 });
 
